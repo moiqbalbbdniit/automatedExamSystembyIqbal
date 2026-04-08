@@ -57,7 +57,7 @@ export default function HomePage() {
   }, []);
 
   return (
-    <main className="min-h-screen text-foreground">
+    <main className="min-h-screen overflow-x-clip text-foreground">
       <section className="relative overflow-hidden pb-14 pt-14 sm:pb-16 sm:pt-18 md:pb-24 md:pt-28">
         <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_20%,color-mix(in_oklch,var(--primary)_20%,transparent)_0%,transparent_38%),radial-gradient(circle_at_85%_5%,color-mix(in_oklch,var(--accent)_28%,transparent)_0%,transparent_40%)]" />
         <div className="mx-auto grid max-w-7xl gap-10 px-4 sm:px-6 lg:grid-cols-[1.12fr_1fr] lg:items-center">
@@ -65,10 +65,10 @@ export default function HomePage() {
             <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              className="mb-4 inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/75 px-3 py-1.5 text-xs font-semibold text-muted-foreground sm:px-4 sm:py-2 sm:text-sm"
+              className="mb-4 inline-flex max-w-full items-center gap-2 rounded-full border border-border/70 bg-card/75 px-3 py-1.5 text-xs font-semibold text-muted-foreground sm:px-4 sm:py-2 sm:text-sm"
             >
               <Sparkles className="size-4 text-primary" />
-              AI-ready university exam platform
+              <span className="truncate">AI-ready university exam platform</span>
             </motion.div>
 
             <motion.h1

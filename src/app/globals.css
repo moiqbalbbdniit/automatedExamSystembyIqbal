@@ -153,6 +153,8 @@
   }
   html {
     @apply scroll-smooth;
+    width: 100%;
+    overflow-x: hidden;
   }
   body {
     @apply bg-background text-foreground antialiased;
@@ -165,6 +167,9 @@
       radial-gradient(circle at 72% 85%, color-mix(in oklch, var(--secondary) 22%, transparent) 0%, transparent 35%),
       linear-gradient(155deg, color-mix(in oklch, var(--background) 94%, white 6%), var(--background));
     background-attachment: fixed;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: clip;
   }
   h1,
   h2,

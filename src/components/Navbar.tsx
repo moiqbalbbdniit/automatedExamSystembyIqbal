@@ -84,7 +84,7 @@ export default function Navbar() {
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 md:px-6 md:py-3">
         <Link
           href="/"
-          className="group flex items-center gap-2 rounded-2xl border border-border/70 bg-card/72 px-2 py-1.5 pr-3 shadow-lg shadow-black/5 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-xl sm:gap-3 sm:px-2.5 sm:pr-4"
+          className="group flex min-w-0 max-w-[calc(100%-4.25rem)] items-center gap-2 rounded-2xl border border-border/70 bg-card/72 px-2 py-1.5 pr-3 shadow-lg shadow-black/5 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-xl sm:gap-3 sm:px-2.5 sm:pr-4"
         >
           <div className="relative h-12 w-12 overflow-hidden rounded-xl border border-border/70 bg-background/90 ring-1 ring-primary/20 shadow-md sm:h-14 sm:w-14 md:h-16 md:w-16 lg:h-[4.5rem] lg:w-[4.5rem]">
             <Image
@@ -96,8 +96,8 @@ export default function Navbar() {
               priority
             />
           </div>
-          <div className="leading-tight">
-            <span className="block text-sm font-extrabold tracking-tight text-foreground sm:text-base md:text-lg lg:text-xl">
+          <div className="min-w-0 leading-tight">
+            <span className="block truncate text-sm font-extrabold tracking-tight text-foreground sm:text-base md:text-lg lg:text-xl">
               TrueGrade AI
             </span>
             <span className="hidden text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:block md:text-[0.68rem]">
@@ -195,7 +195,7 @@ export default function Navbar() {
         </div>
 
         <button
-          className="rounded-xl border border-border/70 bg-card/70 p-2.5 text-foreground shadow-sm transition hover:bg-accent/30 md:hidden"
+          className="shrink-0 rounded-xl border border-border/70 bg-card/70 p-2.5 text-foreground shadow-sm transition hover:bg-accent/30 md:hidden"
           onClick={() => setMenuOpen(!menuOpen)}
         >
           {menuOpen ? <ChevronUp className="size-6" /> : <Menu className="size-6" />}
