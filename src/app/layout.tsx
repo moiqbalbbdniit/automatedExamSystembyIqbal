@@ -42,7 +42,7 @@ export default function RootLayout({
       <body
         className={`${manrope.variable} ${spaceGrotesk.variable} ${jetbrainsMono.variable} flex min-h-screen flex-col bg-background text-foreground`}
       >
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+        <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false} disableTransitionOnChange>
           <AuthProvider>
             <Navbar />
             <main className="flex-1">{children}</main>
