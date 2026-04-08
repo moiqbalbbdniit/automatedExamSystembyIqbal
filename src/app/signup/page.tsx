@@ -82,21 +82,21 @@ const SignupPage = () => {
   };
 
   return (
-    <div className="min-h-screen aurora-page px-4 py-10 md:px-6">
-      <div className="mx-auto grid w-full max-w-6xl gap-8 lg:grid-cols-[0.95fr_1.05fr]">
+    <div className="min-h-screen aurora-page px-4 py-8 sm:py-10 md:px-6">
+      <div className="mx-auto grid w-full max-w-6xl gap-6 sm:gap-8 lg:grid-cols-[0.95fr_1.05fr]">
         <section className="panel hidden p-10 lg:block">
           <span className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/60 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
             <Sparkles className="size-4 text-primary" />
             New Journey
           </span>
-          <h2 className="mt-6 text-5xl font-black leading-tight">Build your identity in the exam workspace.</h2>
+          <h2 className="mt-6 text-4xl font-black leading-tight xl:text-5xl">Build your identity in the exam workspace.</h2>
           <p className="mt-5 max-w-md text-muted-foreground">
             Choose your role, map to your course, and step into a redesigned AI-assisted exam platform.
           </p>
         </section>
 
-      <div className="panel w-full p-8 md:p-10">
-        <h1 className="mb-6 text-center text-3xl font-extrabold">Sign Up</h1>
+      <div className="panel w-full p-5 sm:p-8 md:p-10">
+        <h1 className="mb-6 text-center text-2xl font-extrabold sm:text-3xl">Sign Up</h1>
 
         {/* Role Tabs */}
         <div className="flex justify-center mb-6">
@@ -106,7 +106,7 @@ const SignupPage = () => {
                 key={r}
                 onClick={() => setRole(r)}
                 type="button"
-                className={`w-1/3 py-2 text-sm font-semibold capitalize rounded-full transition-all duration-300 ${
+                className={`w-1/3 rounded-full py-2 text-xs font-semibold capitalize transition-all duration-300 sm:text-sm ${
                   role === r
                     ? "text-white shadow-md " + getRoleColor(r)
                     : "text-muted-foreground hover:text-foreground"

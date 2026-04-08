@@ -11,8 +11,8 @@ export default function AnalyticsPage() {
   };
 
   return (
-    <div className="relative min-h-screen aurora-page p-8 flex flex-col items-center">
-      <h1 className="text-2xl font-bold text-foreground mb-6 text-center">
+    <div className="relative flex min-h-screen flex-col items-center aurora-page p-4 sm:p-6 md:p-8">
+      <h1 className="mb-5 text-center text-xl font-bold text-foreground sm:mb-6 sm:text-2xl">
         Admin Analytics Dashboard
       </h1>
 
@@ -27,8 +27,7 @@ export default function AnalyticsPage() {
       <iframe
         src={process.env.NEXT_PUBLIC_ANALYTICS_MODEL_URL}
         width="100%"
-        height="900"
-        className="rounded-xl border border-slate-800 shadow-xl bg-white w-full"
+        className="h-[70vh] w-full rounded-xl border border-slate-800 bg-white shadow-xl sm:h-[76vh] md:h-[82vh]"
         onLoad={handleIframeLoad}
       ></iframe>
     </div>

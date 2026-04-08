@@ -61,14 +61,14 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen aurora-page px-4 py-10 md:px-6">
-      <div className="mx-auto grid w-full max-w-6xl gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+    <div className="min-h-screen aurora-page px-4 py-8 sm:py-10 md:px-6">
+      <div className="mx-auto grid w-full max-w-6xl gap-6 sm:gap-8 lg:grid-cols-[1.1fr_0.9fr]">
         <section className="panel hidden p-10 lg:block">
           <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/60 px-4 py-2 text-sm font-semibold text-muted-foreground">
             <Sparkles className="size-4 text-primary" />
             Smart Assessment Workspace
           </div>
-          <h1 className="mt-6 text-5xl font-black leading-tight">Exams that feel modern, fast, and secure.</h1>
+          <h1 className="mt-6 text-4xl font-black leading-tight xl:text-5xl">Exams that feel modern, fast, and secure.</h1>
           <p className="mt-5 max-w-lg text-muted-foreground">
             Your new portal gives students, faculty, and admins a cleaner flow with AI-powered tools and a fresh interface.
           </p>
@@ -79,9 +79,9 @@ const LoginPage = () => {
           </div>
         </section>
 
-        <div className="panel w-full max-w-xl p-8 md:p-10 lg:mx-auto">
-        <h1 className="text-center text-3xl font-extrabold mb-3">Welcome Back</h1>
-        <p className="mb-8 text-center text-sm text-muted-foreground">Login to continue to your dashboard</p>
+        <div className="panel w-full max-w-xl p-5 sm:p-8 md:p-10 lg:mx-auto">
+        <h1 className="mb-3 text-center text-2xl font-extrabold sm:text-3xl">Welcome Back</h1>
+        <p className="mb-7 text-center text-sm text-muted-foreground sm:mb-8">Login to continue to your dashboard</p>
 
         {/* Role Switcher */}
         <div className="flex justify-center mb-6">
@@ -91,7 +91,7 @@ const LoginPage = () => {
                 key={r}
                 type="button"
                 onClick={() => setRole(r)}
-                className={`w-1/3 py-2 text-sm font-semibold capitalize rounded-full transition-all duration-300 ${
+                className={`w-1/3 rounded-full py-2 text-xs font-semibold capitalize transition-all duration-300 sm:text-sm ${
                   role === r
                     ? "text-white shadow-lg " + getRoleColor(r)
                     : "text-muted-foreground hover:text-foreground"
