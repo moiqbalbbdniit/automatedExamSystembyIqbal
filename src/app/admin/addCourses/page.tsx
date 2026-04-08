@@ -53,14 +53,14 @@ export default function ManageCoursesPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 p-4 md:p-8 text-blue-100">
+    <div className="min-h-screen aurora-page p-4 md:p-8 text-foreground">
       {/* Header + Back Button */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2 text-blue-400">
-          <GraduationCap className="w-6 h-6 text-blue-500" /> Manage Courses
+        <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2 text-primary">
+          <GraduationCap className="w-6 h-6 text-primary" /> Manage Courses
         </h1>
         <Link href="/admin">
-          <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 w-full md:w-auto">
+          <Button className="flex items-center gap-2 bg-primary hover:bg-primary/85 w-full md:w-auto text-primary-foreground">
             <ArrowLeft className="w-4 h-4" /> Back to Dashboard
           </Button>
         </Link>
@@ -72,7 +72,7 @@ export default function ManageCoursesPage() {
           placeholder="Course Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="flex-1 bg-slate-900 text-blue-100 placeholder-blue-300 border-blue-800"
+          className="flex-1 bg-background text-foreground placeholder:text-muted-foreground border-border"
         />
         {/* <Input
           placeholder="Course ID"
@@ -84,20 +84,20 @@ export default function ManageCoursesPage() {
           placeholder="Description (optional)"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          className="flex-1 bg-slate-900 text-blue-100 placeholder-blue-300 border-blue-800"
+          className="flex-1 bg-background text-foreground placeholder:text-muted-foreground border-border"
         />
         <Button
           onClick={handleAdd}
-          className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto font-semibold"
+          className="bg-primary hover:bg-primary/85 w-full sm:w-auto font-semibold text-primary-foreground"
         >
           Add
         </Button>
       </div>
 
       {/* Courses Table */}
-      <div className="overflow-x-auto rounded-lg shadow-lg border border-blue-900 bg-slate-900">
-        <table className="w-full text-left text-blue-100">
-          <thead className="text-sm text-blue-300 border-b border-blue-800">
+      <div className="panel overflow-x-auto rounded-lg shadow-lg">
+        <table className="w-full text-left text-foreground">
+          <thead className="text-sm text-muted-foreground border-b border-border">
             <tr>
               <th className="py-3 px-4">Name</th>
               {/* <th className="py-3 px-4">Course ID</th> */}
@@ -105,13 +105,13 @@ export default function ManageCoursesPage() {
               <th className="py-3 px-4 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-blue-900">
+          <tbody className="divide-y divide-border">
             {courses.length > 0 ? (
               courses.map((c) => (
-                <tr key={c._id} className="hover:bg-slate-800 transition">
+                <tr key={c._id} className="hover:bg-accent/20 transition">
                   <td className="py-3 px-4 font-medium">{c.name}</td>
                   {/* <td className="py-3 px-4">{c.courseId}</td> */}
-                  <td className="py-3 px-4 text-sm text-blue-300">
+                  <td className="py-3 px-4 text-sm text-muted-foreground">
                     {c.description || "—"}
                   </td>
                   <td className="py-3 px-4 text-right">
@@ -128,7 +128,7 @@ export default function ManageCoursesPage() {
               <tr>
                 <td
                   colSpan={4}
-                  className="text-center py-6 text-blue-400 italic"
+                  className="text-center py-6 text-muted-foreground italic"
                 >
                   No courses added yet.
                 </td>

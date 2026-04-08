@@ -21,19 +21,19 @@ export default function AnalyticsPage() {
 
   if (!studentId) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-gray-950 via-gray-900 to-blue-950 text-blue-300 font-medium">
+      <div className="flex min-h-screen items-center justify-center text-primary font-medium">
          <Loader2 className="w-6 h-6 mr-2 animate-spin" />  Loading analytics...
       </div>
     );
   }
 
   return (
-    <div className="relative min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-blue-950 p-6 sm:p-10 text-gray-100">
+    <div className="relative min-h-screen aurora-page p-6 sm:p-10 text-foreground">
       {/* Loader overlay */}
       {loading && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gray-950/95 backdrop-blur-sm z-10">
-          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-          <p className="text-white text-lg font-medium">Loading report...</p>
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/95 backdrop-blur-sm z-10">
+          <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4"></div>
+          <p className="text-foreground text-lg font-medium">Loading report...</p>
         </div>
       )}
 
@@ -41,7 +41,7 @@ export default function AnalyticsPage() {
       <div className="flex justify-start mb-6">
         <button
           onClick={() => router.back()}
-          className="flex items-center justify-center gap-2 bg-blue-600/20 cursor-pointer hover:bg-blue-600/30 text-blue-300 px-4 py-2 rounded-full font-medium transition-all duration-200 shadow-sm border border-blue-700/30 w-full sm:w-auto"
+          className="flex items-center justify-center gap-2 bg-primary/20 cursor-pointer hover:bg-primary/30 text-primary px-4 py-2 rounded-full font-medium transition-all duration-200 shadow-sm border border-primary/30 w-full sm:w-auto"
         >
           <ChevronLeft className="w-4 h-4" />
           Back to Dashboard
@@ -52,12 +52,12 @@ export default function AnalyticsPage() {
       {/* Header */}
        <div className="flex flex-col items-center mb-8 text-center">
         <div className="flex items-center gap-2 mb-2">
-          <BarChart3 className="w-6 h-6 text-blue-400" />
-          <h1 className="text-3xl font-bold text-blue-400">
+          <BarChart3 className="w-6 h-6 text-primary" />
+          <h1 className="text-3xl font-bold text-primary">
             Student Analytics Dashboard
           </h1>
         </div>
-        <p className="text-gray-400 text-sm">
+        <p className="text-muted-foreground text-sm">
           Comprehensive performance overview and trends
         </p>
       </div>

@@ -70,14 +70,14 @@ export default function AddFacultyPage() {
   };
 
   return (
-    <div className=" mx-auto p-6 bg-gray-950 min-h-screen text-gray-100">
+    <div className="mx-auto p-6 min-h-screen aurora-page text-foreground">
       {/* Header + Back */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <h1 className="text-2xl font-bold flex items-center gap-2 text-blue-400 ml-2">
-          <UserPlus className="w-6 h-6 text-teal-400" /> Manage Faculties
+        <h1 className="text-2xl font-bold flex items-center gap-2 text-primary ml-2">
+          <UserPlus className="w-6 h-6 text-chart-2" /> Manage Faculties
         </h1>
         <Link href="/admin" className="w-full md:w-auto">
-          <Button className="w-full flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700">
+          <Button className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary/85 text-primary-foreground">
             <ArrowLeft className="w-4 h-4" /> Back to Dashboard
           </Button>
         </Link>
@@ -89,19 +89,19 @@ export default function AddFacultyPage() {
           placeholder="Full Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="bg-gray-900 border-gray-700 text-white placeholder:text-gray-400"
+          className="bg-background border-border text-foreground placeholder:text-muted-foreground"
         />
         <Input
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="bg-gray-900 border-gray-700 text-white placeholder:text-gray-400"
+          className="bg-background border-border text-foreground placeholder:text-muted-foreground"
         />
         <Select value={department} onValueChange={setDepartment}>
-          <SelectTrigger className="w-40 bg-gray-900 border-gray-700 text-white">
+          <SelectTrigger className="w-40 bg-background border-border text-foreground">
             <SelectValue placeholder="Department" />
           </SelectTrigger>
-          <SelectContent className="bg-gray-900 border border-gray-700 text-gray-100">
+          <SelectContent className="bg-popover border border-border text-popover-foreground">
             {departments.map((d) => (
               <SelectItem key={d._id} value={d.name}>
                 {d.name}
@@ -111,16 +111,16 @@ export default function AddFacultyPage() {
         </Select>
         <Button
           onClick={handleAdd}
-          className="bg-blue-600 hover:bg-blue-700 text-white shadow-md"
+          className="bg-primary hover:bg-primary/85 text-primary-foreground shadow-md"
         >
           Add
         </Button>
       </div>
 
       {/* Table */}
-      <div className="overflow-hidden rounded-lg border border-gray-800 shadow">
+      <div className="panel overflow-hidden rounded-lg shadow">
         <table className="w-full">
-          <thead className="bg-gray-900 text-sm text-gray-400">
+          <thead className="bg-card text-sm text-muted-foreground">
             <tr>
               <th className="py-3 px-4 text-left">Name</th>
               <th className="py-3 px-4 text-left">Email</th>

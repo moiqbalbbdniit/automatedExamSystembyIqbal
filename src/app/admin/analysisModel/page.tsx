@@ -7,10 +7,10 @@ export default function AnalyticsIframe() {
   const [loaded, setLoaded] = useState(false);
 
   return (
-    <div className="w-full h-screen bg-gray-900 text-white flex flex-col items-center">
+    <div className="w-full h-screen aurora-page bg-background text-foreground flex flex-col items-center">
       {!loaded && (
         <div className="flex items-center justify-center h-full">
-          <Loader2 className="animate-spin text-blue-400 w-8 h-8" />
+          <Loader2 className="animate-spin text-primary w-8 h-8" />
           <span className="ml-3">Loading Analytics Dashboard...</span>
         </div>
       )}

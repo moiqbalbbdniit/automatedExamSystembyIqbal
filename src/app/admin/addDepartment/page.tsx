@@ -48,14 +48,14 @@ export default function AddDepartmentPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 p-4 md:p-8 text-gray-100">
+    <div className="min-h-screen aurora-page p-4 md:p-8 text-foreground">
       {/* Header + Back Button */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2 text-blue-400">
-          <Building2 className="w-6 h-6 text-blue-400" /> Manage Departments
+        <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2 text-primary">
+          <Building2 className="w-6 h-6 text-primary" /> Manage Departments
         </h1>
         <Link href="/admin">
-          <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 w-full md:w-auto cursor-pointer">
+          <Button className="flex items-center gap-2 bg-primary hover:bg-primary/85 w-full md:w-auto cursor-pointer text-primary-foreground">
             <ArrowLeft className="w-4 h-4" /> Back to Dashboard
           </Button>
         </Link>
@@ -67,33 +67,33 @@ export default function AddDepartmentPage() {
           placeholder="Department Name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="flex-1 bg-gray-900 text-gray-100 placeholder:text-gray-300 border-gray-700"
+          className="flex-1 bg-background text-foreground placeholder:text-muted-foreground border-border"
         />
         <Input
           placeholder="Code (e.g., CSE)"
           value={code}
           onChange={(e) => setCode(e.target.value)}
-          className="w-full sm:w-36 bg-gray-900 text-gray-100 placeholder:text-gray-300 border-gray-700"
+          className="w-full sm:w-36 bg-background text-foreground placeholder:text-muted-foreground border-border"
         />
         <Button
           onClick={handleAdd}
-          className="bg-blue-600 hover:bg-blue-700 w-full sm:w-auto cursor-pointer"
+          className="bg-primary hover:bg-primary/85 w-full sm:w-auto cursor-pointer text-primary-foreground"
         >
           Add
         </Button>
       </div>
 
       {/* Departments Table */}
-      <div className="overflow-x-auto rounded-lg shadow-lg border border-gray-800 bg-gray-900">
-        <table className="w-full text-left text-gray-100">
-          <thead className="text-sm text-gray-400 border-b border-gray-700">
+      <div className="panel overflow-x-auto rounded-lg shadow-lg">
+        <table className="w-full text-left text-foreground">
+          <thead className="text-sm text-muted-foreground border-b border-border">
             <tr>
               <th className="py-3 px-4">Name</th>
               <th className="py-3 px-4">Code</th>
               <th className="py-3 px-4 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-700">
+          <tbody className="divide-y divide-border">
             {departments.map((d) => (
               <tr key={d._id} className="hover:bg-gray-800 transition">
                 <td className="py-3 px-4 font-medium">{d.name}</td>

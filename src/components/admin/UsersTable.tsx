@@ -109,10 +109,10 @@ export default function UsersTable() {
   }, [users, searchTerm, filterRole]);
 
   return (
-    <div className="space-y-4 text-white">
+    <div className="space-y-4 text-foreground">
       {loading && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <p className="text-white text-lg">Loading...</p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/65 backdrop-blur-sm">
+          <p className="text-foreground text-lg">Loading...</p>
         </div>
       )}
 
@@ -120,7 +120,7 @@ export default function UsersTable() {
       <div className="flex flex-wrap gap-4 items-center placeholder:text-gray-300">
         <Input
           placeholder="Search by name, email or username..."
-          className="w-60 placeholder:text-gray-300"
+          className="w-72 bg-background/80 border-border placeholder:text-muted-foreground"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
@@ -129,7 +129,7 @@ export default function UsersTable() {
           <SelectTrigger className="w-40">
             <SelectValue />
           </SelectTrigger>
-          <SelectContent className="bg-gray-800 text-white">
+          <SelectContent className="bg-popover text-popover-foreground border-border">
             <SelectItem value="All">All Roles</SelectItem>
             <SelectItem value="Faculty">Faculty</SelectItem>
             <SelectItem value="Student">Student</SelectItem>
@@ -138,9 +138,9 @@ export default function UsersTable() {
       </div>
 
       {/* Scrollable Table */}
-      <div className="overflow-x-auto max-h-[600px] border border-gray-700 rounded">
+      <div className="overflow-x-auto max-h-[600px] border border-border rounded-xl panel">
         <table className="w-full text-left">
-          <thead className="text-sm text-white sticky top-0 bg-gray-900 z-10">
+          <thead className="text-sm text-muted-foreground sticky top-0 bg-card z-10">
             <tr>
               <th className="py-3 px-4">User</th>
               <th className="py-3 px-4">Username</th>
@@ -149,17 +149,17 @@ export default function UsersTable() {
             </tr>
           </thead>
 
-          <tbody className="divide-y">
+          <tbody className="divide-y divide-border/70">
             {filteredUsers.map((u) => (
-              <tr key={u._id} className="bg-gray-800 text-white">
+              <tr key={u._id} className="bg-card/65 text-foreground hover:bg-accent/12 transition-colors">
                 <td className="py-4 px-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gray-700 flex items-center justify-center">
-                      <User className="w-5 h-5 text-indigo-400" />
+                    <div className="w-10 h-10 rounded-full bg-primary/15 border border-primary/30 flex items-center justify-center">
+                      <User className="w-5 h-5 text-primary" />
                     </div>
                     <div>
                       <div className="font-medium">{u.firstName} {u.lastName}</div>
-                      <div className="text-sm text-gray-300">{u.email}</div>
+                      <div className="text-sm text-muted-foreground">{u.email}</div>
                     </div>
                   </div>
                 </td>
@@ -172,7 +172,7 @@ export default function UsersTable() {
                     {/* Edit Dialog */}
                     <Dialog open={editUser?._id === u._id} onOpenChange={(open) => !open && setEditUser(null)}>
                       <DialogTrigger asChild>
-                        <button className="text-white hover:text-indigo-400" onClick={() => setEditUser(u)}>
+                        <button className="text-foreground hover:text-primary" onClick={() => setEditUser(u)}>
                           <Edit3 className="w-4 h-4" />
                         </button>
                       </DialogTrigger>
@@ -226,7 +226,7 @@ export default function UsersTable() {
 
             {filteredUsers.length === 0 && (
               <tr>
-                <td colSpan={4} className="text-center py-6 text-gray-400">
+                <td colSpan={4} className="text-center py-6 text-muted-foreground">
                   No users found
                 </td>
               </tr>

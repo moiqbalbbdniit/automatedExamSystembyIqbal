@@ -415,21 +415,21 @@ export default function ExamTaker() {
 
   // --- UI Rendering ---
   if (loading)
-    return <div className="min-h-screen flex items-center justify-center text-gray-300 text-lg">Loading Exam...</div>;
+    return <div className="min-h-screen flex items-center justify-center text-muted-foreground text-lg">Loading Exam...</div>;
 
   if (error || !exam)
-    return <div className="min-h-screen flex items-center justify-center text-red-500">Error: {error || "Exam not found."}</div>;
+    return <div className="min-h-screen flex items-center justify-center text-destructive">Error: {error || "Exam not found."}</div>;
 
   return (
     <>
 
     {showInstructions && (
-      <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 text-white p-6">
-        <div className="bg-gray-800 rounded-2xl p-8 max-w-lg text-center space-y-6 shadow-2xl border border-gray-700">
-          <h2 className="text-2xl font-bold text-blue-300">Exam Instructions</h2>
-          <ul className="text-left text-gray-200 list-disc list-inside space-y-2">
+      <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 text-foreground p-6">
+        <div className="panel rounded-2xl p-8 max-w-lg text-center space-y-6 shadow-2xl">
+          <h2 className="text-2xl font-bold text-primary">Exam Instructions</h2>
+          <ul className="text-left text-muted-foreground list-disc list-inside space-y-2">
 
-            <ul className="list-disc pl-5 mb-2 text-lg space-y-1 text-gray-100 text-xs sm:text-sm leading-relaxed">
+            <ul className="list-disc pl-5 mb-2 text-lg space-y-1 text-foreground text-xs sm:text-sm leading-relaxed">
               <li>Keep your camera and microphone on throughout the exam - moving out of the frame may trigger a warning or auto-submit.</li>
               <li>Switching tabs or minimizing the window more than twice will result in automatic submission.</li>
               <li>Do not reload, copy, or navigate away from the exam window.</li>
@@ -446,7 +446,7 @@ export default function ExamTaker() {
               setShowInstructions(false);
               setIsProctoringStarted(true); // 👈 Add this new state trigger
             }}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3 rounded-full"
+            className="bg-primary hover:bg-primary/85 text-primary-foreground font-bold px-6 py-3 rounded-full"
           >
             I’m Ready
           </Button>
@@ -455,11 +455,11 @@ export default function ExamTaker() {
       </div>
     )}
     {showInstructions && !exam?.proctoringEnabled && (
-      <div className="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 text-white p-6">
-        <div className="bg-gray-800 rounded-2xl p-8 max-w-lg text-center space-y-6 shadow-2xl border border-gray-700">
-          <h2 className="text-2xl font-bold text-blue-300">Exam Instructions</h2>
-          <ul className="text-left text-gray-200 list-disc list-inside space-y-2">
-            <ul className="list-disc pl-5 mb-2 text-lg space-y-1 text-gray-100 text-xs sm:text-sm leading-relaxed">
+      <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 text-foreground p-6">
+        <div className="panel rounded-2xl p-8 max-w-lg text-center space-y-6 shadow-2xl">
+          <h2 className="text-2xl font-bold text-primary">Exam Instructions</h2>
+          <ul className="text-left text-muted-foreground list-disc list-inside space-y-2">
+            <ul className="list-disc pl-5 mb-2 text-lg space-y-1 text-foreground text-xs sm:text-sm leading-relaxed">
 
               <li>Switching tabs or minimizing the window more than twice will result in automatic submission.</li>
               <li>Do not reload, copy, or navigate away from the exam window.</li>
@@ -476,7 +476,7 @@ export default function ExamTaker() {
 
               setIsProctoringStarted(true); // Triggers the non-proctoring exam flow
             }}
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-6 py-3 rounded-full"
+            className="bg-primary hover:bg-primary/85 text-primary-foreground font-bold px-6 py-3 rounded-full"
           >
             Start Exam
           </Button>
@@ -484,38 +484,38 @@ export default function ExamTaker() {
       </div>
     )}
 
-      <div className="min-h-screen bg-gradient-to-br from-gray-900 via-slate-900 to-blue-900 text-white font-sans p-6 sm:p-10">
+      <div className="min-h-screen aurora-page text-foreground font-sans p-6 sm:p-10">
         <div className="max-w-5xl mx-auto space-y-6">
-          <header className="flex flex-col sm:flex-row items-center justify-between p-6 bg-gradient-to-r from-gray-800 to-gray-700 rounded-3xl shadow-2xl border border-gray-600">
+          <header className="panel flex flex-col sm:flex-row items-center justify-between p-6 rounded-3xl shadow-2xl">
             <Button
               onClick={() => handleExamSubmission(false)}
               disabled={submitting}
-              className="flex items-center gap-2 font-semibold rounded-full bg-red-600 border border-red-800 hover:bg-red-700 text-white shadow-xl px-5 py-3 order-3 sm:order-1 mt-4 sm:mt-0"
+              className="flex items-center gap-2 font-semibold rounded-full bg-destructive border border-destructive/70 hover:bg-destructive/85 text-destructive-foreground shadow-xl px-5 py-3 order-3 sm:order-1 mt-4 sm:mt-0"
             >
               {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
               {submitting ? "Submitting..." : "Finish Exam"}
             </Button>
 
             <div className="text-center flex-1 mt-4 sm:mt-0 order-1 sm:order-2">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-teal-400 drop-shadow-md">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-primary drop-shadow-md">
                 {exam.subject?.name} Exam
               </h1>
             </div>
 
-            <div className="flex items-center space-x-2 text-red-600 font-bold bg-gradient-to-r from-red-200 to-red-100 px-5 py-2 rounded-full shadow-md mt-4 sm:mt-0 order-2 sm:order-3">
+            <div className="flex items-center space-x-2 text-destructive font-bold bg-destructive/10 border border-destructive/40 px-5 py-2 rounded-full shadow-md mt-4 sm:mt-0 order-2 sm:order-3">
               <Clock className="w-5 h-5" />
-              <span className="text-red-800">{formatTime(timeLeft)}</span>
+              <span className="text-destructive">{formatTime(timeLeft)}</span>
             </div>
           </header>
 
           <section className="space-y-8">
             {allQuestions.map((q, i) => (
-              <Card key={q.Q_ID || i} className="p-8 rounded-3xl shadow-xl bg-gradient-to-br from-gray-800 to-gray-900 border border-gray-700">
+              <Card key={q.Q_ID || i} className="p-8 rounded-3xl shadow-xl bg-card/80 border border-border backdrop-blur-sm">
                 <CardHeader className="p-0 mb-6">
-                  <CardTitle className="text-xl font-bold text-blue-300">Question {i + 1}</CardTitle>
+                  <CardTitle className="text-xl font-bold text-primary">Question {i + 1}</CardTitle>
                 </CardHeader>
                 <CardContent className="p-0 space-y-6">
-                  <p className="text-lg font-medium text-white">{q.question}</p>
+                  <p className="text-lg font-medium text-foreground">{q.question}</p>
 
                   {q.type === "MCQ" && q.options && (
                     <div className="space-y-4">
@@ -524,8 +524,8 @@ export default function ExamTaker() {
                           key={optIndex}
                           className={`flex items-center space-x-3 p-4 border rounded-lg cursor-pointer ${
                             answers.find((a) => a.questionText === q.question)?.studentAnswer === option
-                              ? "bg-blue-700 border-blue-400"
-                              : "bg-gray-800 border-gray-600 hover:bg-blue-700"
+                              ? "bg-primary/20 border-primary/60"
+                              : "bg-card border-border hover:bg-accent/20"
                           }`}
                           onClick={() => handleAnswerChange(q, option)}
                         >
@@ -533,9 +533,9 @@ export default function ExamTaker() {
                             type="radio"
                             checked={answers.find((a) => a.questionText === q.question)?.studentAnswer === option}
                             readOnly
-                            className="form-radio text-blue-500 w-4 h-4"
+                            className="form-radio text-primary w-4 h-4"
                           />
-                          <label className="text-white font-medium flex-1 cursor-pointer">{option}</label>
+                          <label className="text-foreground font-medium flex-1 cursor-pointer">{option}</label>
                         </div>
                       ))}
                     </div>
@@ -547,7 +547,7 @@ export default function ExamTaker() {
                       placeholder="Write your answer..."
                       value={answers.find((a) => a.questionText === q.question)?.studentAnswer || ""}
                       onChange={(e) => handleAnswerChange(q, e.target.value)}
-                      className="w-full p-4 border border-gray-600 rounded-lg bg-gray-900 text-white placeholder-gray-300"
+                      className="w-full p-4 border border-input rounded-lg bg-background text-foreground placeholder:text-muted-foreground"
                     />
                   )}
 
@@ -557,7 +557,7 @@ export default function ExamTaker() {
                       placeholder="// Write your code here..."
                       value={answers.find((a) => a.questionText === q.question)?.studentAnswer || ""}
                       onChange={(e) => handleAnswerChange(q, e.target.value)}
-                      className="w-full font-mono p-4 border border-gray-600 rounded-lg bg-gray-950 text-green-400 placeholder-gray-400"
+                      className="w-full font-mono p-4 border border-input rounded-lg bg-background text-chart-2 placeholder:text-muted-foreground"
                     />
                   )}
                 </CardContent>
@@ -567,7 +567,7 @@ export default function ExamTaker() {
             <Button
               onClick={() => handleExamSubmission(false)}
               disabled={submitting}
-              className="w-full flex items-center justify-center gap-3 py-4 text-white font-bold rounded-3xl shadow-lg bg-gradient-to-r from-blue-800 to-blue-900 hover:to-blue-800"
+              className="w-full flex items-center justify-center gap-3 py-4 text-primary-foreground font-bold rounded-3xl shadow-lg bg-primary hover:bg-primary/85"
             >
               {submitting ? <Loader2 className="w-6 h-6 animate-spin" /> : <UploadCloud className="w-6 h-6" />}
               {submitting ? "Submitting..." : "Submit Exam"}
@@ -576,7 +576,7 @@ export default function ExamTaker() {
         </div>
 
         {exam?.proctoringEnabled && (
-          <div className="fixed bottom-5 right-5 w-32 h-32 sm:w-40 sm:h-40 bg-black border-2 border-blue-500 rounded-lg overflow-hidden shadow-lg z-[9999] flex items-center justify-center">
+          <div className="fixed bottom-5 right-5 w-32 h-32 sm:w-40 sm:h-40 bg-background border-2 border-primary rounded-lg overflow-hidden shadow-lg z-[9999] flex items-center justify-center">
             <video
               ref={videoRef}
               autoPlay
@@ -586,7 +586,7 @@ export default function ExamTaker() {
               style={{ transform: "scaleX(-1)" }}
             />
             {!cameraStream && (
-              <span className="text-xs text-gray-400 absolute">Loading camera...</span>
+              <span className="text-xs text-muted-foreground absolute">Loading camera...</span>
             )}
           </div>
         )}
@@ -594,18 +594,18 @@ export default function ExamTaker() {
 
       {/* 🔒 Reload Confirmation Dialog */}
       <AlertDialog open={showReloadDialog} onOpenChange={setShowReloadDialog}>
-        <AlertDialogContent className="bg-gray-900 border border-gray-700 text-gray-100">
+        <AlertDialogContent className="bg-popover border border-border text-popover-foreground">
           <AlertDialogHeader>
             <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription className="text-white" >
+            <AlertDialogDescription className="text-popover-foreground" >
               If you reload or leave this page, all unsaved answers may be lost. Please confirm before refreshing.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setShowReloadDialog(false)} className="bg-gray-700 text-gray-200 hover:bg-gray-600">
+            <AlertDialogCancel onClick={() => setShowReloadDialog(false)} className="bg-muted text-foreground hover:bg-muted/80 border-border">
               Stay on Page
             </AlertDialogCancel>
-            <AlertDialogAction onClick={() => window.location.reload()} className="bg-red-600 text-white hover:bg-red-700">
+            <AlertDialogAction onClick={() => window.location.reload()} className="bg-destructive text-destructive-foreground hover:bg-destructive/85">
               Reload Anyway
             </AlertDialogAction>
           </AlertDialogFooter>
@@ -614,15 +614,15 @@ export default function ExamTaker() {
 
       {/* ✅ Submit Confirmation Dialog */}
       <AlertDialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
-        <AlertDialogContent className="bg-gray-900 border border-gray-700 text-gray-100">
+        <AlertDialogContent className="bg-popover border border-border text-popover-foreground">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-green-700">Submit Exam?</AlertDialogTitle>
-            <AlertDialogDescription className="text-white">
+            <AlertDialogTitle className="text-chart-2">Submit Exam?</AlertDialogTitle>
+            <AlertDialogDescription className="text-popover-foreground">
               Are you sure you want to submit your exam? You won&lsquo;t be able to change your answers after submission.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setShowSubmitDialog(false)} className="bg-gray-700 text-gray-200 hover:bg-gray-600">
+            <AlertDialogCancel onClick={() => setShowSubmitDialog(false)} className="bg-muted text-foreground hover:bg-muted/80 border-border">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
@@ -630,7 +630,7 @@ export default function ExamTaker() {
                 setShowSubmitDialog(false);
                 handleExamSubmission(true);
               }}
-              className="bg-blue-600 text-white hover:bg-blue-700"
+              className="bg-primary text-primary-foreground hover:bg-primary/85"
             >
               Yes, Submit
             </AlertDialogAction>
@@ -640,15 +640,15 @@ export default function ExamTaker() {
 
       {/* ✅ Success Dialog */}
       <AlertDialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
-        <AlertDialogContent className="bg-gray-900 border border-gray-700 text-gray-100">
+        <AlertDialogContent className="bg-popover border border-border text-popover-foreground">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-gray-100">✅ Exam Submitted</AlertDialogTitle>
-            <AlertDialogDescription className="text-gray-300">
+            <AlertDialogTitle className="text-popover-foreground">✅ Exam Submitted</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
               Your exam has been submitted successfully. Click below to close this tab.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogAction onClick={() => window.close()} className="bg-green-600 text-white hover:bg-green-700">
+            <AlertDialogAction onClick={() => window.close()} className="bg-chart-2 text-background hover:bg-chart-2/85">
               Yes
             </AlertDialogAction>
           </AlertDialogFooter>

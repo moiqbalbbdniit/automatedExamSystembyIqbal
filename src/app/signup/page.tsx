@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { Sparkles } from "lucide-react";
 
 const SignupPage = () => {
   const [firstName, setFirstName] = useState("");
@@ -81,13 +82,25 @@ const SignupPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900 to-gray-900 flex items-center justify-center p-4">
-      <div className="bg-white/10 backdrop-blur-lg-md p-8 rounded-2xl shadow-2xl w-full max-w-md border border-white/20">
-        <h1 className="text-3xl font-bold text-center text-indigo-400 mb-6">Sign Up</h1>
+    <div className="min-h-screen aurora-page px-4 py-10 md:px-6">
+      <div className="mx-auto grid w-full max-w-6xl gap-8 lg:grid-cols-[0.95fr_1.05fr]">
+        <section className="panel hidden p-10 lg:block">
+          <span className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/60 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            <Sparkles className="size-4 text-primary" />
+            New Journey
+          </span>
+          <h2 className="mt-6 text-5xl font-black leading-tight">Build your identity in the exam workspace.</h2>
+          <p className="mt-5 max-w-md text-muted-foreground">
+            Choose your role, map to your course, and step into a redesigned AI-assisted exam platform.
+          </p>
+        </section>
+
+      <div className="panel w-full p-8 md:p-10">
+        <h1 className="mb-6 text-center text-3xl font-extrabold">Sign Up</h1>
 
         {/* Role Tabs */}
         <div className="flex justify-center mb-6">
-          <div className="flex justify-between items-center p-1 bg-gray-800/70 rounded-full shadow-inner w-full max-w-xs">
+          <div className="flex w-full max-w-xs items-center justify-between rounded-full border border-border/70 bg-muted/60 p-1">
             {roles.map((r) => (
               <button
                 key={r}
@@ -96,7 +109,7 @@ const SignupPage = () => {
                 className={`w-1/3 py-2 text-sm font-semibold capitalize rounded-full transition-all duration-300 ${
                   role === r
                     ? "text-white shadow-md " + getRoleColor(r)
-                    : "text-gray-400 hover:text-white"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {r}
@@ -108,7 +121,7 @@ const SignupPage = () => {
         {/* Signup Form */}
         <form onSubmit={handleSignup} className="space-y-4">
           <div>
-            <label htmlFor="firstName" className="block text-sm font-medium text-gray-300 mb-1">
+            <label htmlFor="firstName" className="mb-1 block text-sm font-medium text-muted-foreground">
               First Name
             </label>
             <input
@@ -121,12 +134,12 @@ const SignupPage = () => {
 
               
 
-              className="w-full px-4 py-3 rounded-lg bg-gray-900/60 text-white placeholder-gray-400 border border-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+              className="w-full rounded-xl border border-input bg-background/70 px-4 py-3 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring transition"
 
             />
           </div>
           <div>
-            <label htmlFor="lastName" className="block text-sm font-medium text-gray-300 mb-1">
+            <label htmlFor="lastName" className="mb-1 block text-sm font-medium text-muted-foreground">
               Last Name
             </label>
             <input
@@ -139,7 +152,7 @@ const SignupPage = () => {
 
               
 
-              className="w-full px-4 py-3 rounded-lg bg-gray-900/60 text-white placeholder-gray-400 border border-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+              className="w-full rounded-xl border border-input bg-background/70 px-4 py-3 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring transition"
 
             />
           </div>
@@ -158,7 +171,7 @@ const SignupPage = () => {
             />
           </div> */}
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-300 mb-1">
+            <label htmlFor="email" className="mb-1 block text-sm font-medium text-muted-foreground">
               Email
             </label>
             <input
@@ -171,12 +184,12 @@ const SignupPage = () => {
 
               
 
-              className="w-full px-4 py-3 rounded-lg bg-gray-900/60 text-white placeholder-gray-400 border border-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+              className="w-full rounded-xl border border-input bg-background/70 px-4 py-3 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring transition"
 
             />
           </div>
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-300 mb-1">
+            <label htmlFor="password" className="mb-1 block text-sm font-medium text-muted-foreground">
               Password
             </label>
             <input
@@ -189,7 +202,7 @@ const SignupPage = () => {
 
               
 
-              className="w-full px-4 py-3 rounded-lg bg-gray-900/60 text-white placeholder-gray-400 border border-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+              className="w-full rounded-xl border border-input bg-background/70 px-4 py-3 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring transition"
 
             />
           </div>
@@ -197,7 +210,7 @@ const SignupPage = () => {
           {/* Course Dropdown (only for student/faculty) */}
           {(role === "student" || role === "faculty") && (
             <div>
-              <label htmlFor="course" className="block text-sm font-medium text-gray-300 mb-1">
+              <label htmlFor="course" className="mb-1 block text-sm font-medium text-muted-foreground">
                 Select Course
               </label>
               <select
@@ -205,7 +218,7 @@ const SignupPage = () => {
                 value={selectedCourse}
                 onChange={(e) => setSelectedCourse(e.target.value)}
                 required
-                className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                className="w-full rounded-xl border border-input bg-background/70 px-4 py-3 text-foreground"
               >
                 <option value="">-- Choose a Course --</option>
                 {courses.map((course) => (
@@ -219,7 +232,7 @@ const SignupPage = () => {
 
           <button
             type="submit"
-            className="w-full px-4 py-3 bg-indigo-600 text-white font-semibold rounded-xl shadow-md hover:bg-indigo-700 transition-colors focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900"
+            className="w-full rounded-xl bg-primary px-4 py-3 font-semibold text-primary-foreground shadow-md transition-colors hover:bg-primary/85"
             disabled={loading}
           >
             {loading ? "Processing..." : "Sign Up"}
@@ -227,13 +240,14 @@ const SignupPage = () => {
         </form>
 
         <div className="mt-4 text-center">
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-muted-foreground">
             Already have an account?
-            <a href="/login" className="text-indigo-400 hover:text-indigo-300 font-semibold ml-1 transition-colors">
+            <a href="/login" className="ml-1 font-semibold text-primary transition-colors hover:text-primary/80">
               Login
             </a>
           </p>
         </div>
+      </div>
       </div>
     </div>
   );

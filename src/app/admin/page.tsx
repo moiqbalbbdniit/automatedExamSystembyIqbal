@@ -32,54 +32,54 @@ export default function AdminPage() {
 
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100">
+    <div className="min-h-screen aurora-page text-foreground">
       <div className="flex flex-col p-4 sm:p-6 md:p-8">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-semibold text-blue-400">
+            <h1 className="text-xl sm:text-3xl font-semibold text-primary">
               Admin Dashboard
             </h1>
-            <p className="text-sm text-gray-400 mt-1">
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
               Comprehensive system oversight and management
             </p>
           </div>
 
           {/* Action Menu */}
-          <div className="flex flex-wrap gap-2 sm:gap-3">
+          <div className="grid w-full sm:w-auto grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
             <Link
               href="/admin/question-bank"
-              className="px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-md shadow hover:bg-indigo-800 text-sm sm:text-base"
+              className="text-center px-2 sm:px-4 py-2 bg-primary text-primary-foreground rounded-md shadow hover:bg-primary/85 text-xs sm:text-sm font-medium"
             >
               Question Bank
             </Link>
             <Link
               href="/admin/addFaculty"
-              className="px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-md shadow hover:bg-indigo-700 text-sm sm:text-base"
+              className="text-center px-2 sm:px-4 py-2 border border-border bg-card/75 text-foreground rounded-md hover:bg-accent/20 text-xs sm:text-sm"
             >
               Add Faculty
             </Link>
             <Link
               href="/admin/addSubject"
-              className="px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-md shadow hover:bg-blue-700 text-sm sm:text-base"
+              className="text-center px-2 sm:px-4 py-2 border border-border bg-card/75 text-foreground rounded-md hover:bg-accent/20 text-xs sm:text-sm"
             >
               Add Subject
             </Link>
             <Link
               href="/admin/addDepartment"
-              className="px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-md shadow hover:bg-indigo-700 text-sm sm:text-base"
+              className="text-center px-2 sm:px-4 py-2 border border-border bg-card/75 text-foreground rounded-md hover:bg-accent/20 text-xs sm:text-sm"
             >
               Add Department
             </Link>
             <Link
               href="/admin/addCourses"
-              className="px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-md shadow hover:bg-indigo-700 text-sm sm:text-base"
+              className="text-center px-2 sm:px-4 py-2 border border-border bg-card/75 text-foreground rounded-md hover:bg-accent/20 text-xs sm:text-sm"
             >
               Add Course
             </Link>
             <Link
               href="/admin/notifications"
-              className="px-3 sm:px-4 py-2 bg-indigo-600 text-white rounded-md shadow hover:bg-indigo-700 text-sm sm:text-base"
+              className="text-center px-2 sm:px-4 py-2 border border-border bg-card/75 text-foreground rounded-md hover:bg-accent/20 text-xs sm:text-sm"
             >
               Post Notification
             </Link>
@@ -130,7 +130,7 @@ export default function AdminPage() {
 
           {/* New "Show Analytics" Card */}
           <Link href="/admin/analytics" className="lg:col-span-1">
-            <div className="bg-gray-800 hover:bg-gray-700 rounded-lg shadow-md text-white flex flex-col justify-center items-center text-center p-8 transition-all duration-300 cursor-pointer border border-black">
+            <div className="panel hover:bg-accent/20 text-foreground flex flex-col justify-center items-center text-center p-8 transition-all duration-300 cursor-pointer">
               <BarChart3 className="w-8 h-8 mb-3" />
               <h3 className="text-lg font-semibold">View Analytics</h3>
               <p className="text-sm opacity-90">Detailed insights & trends</p>
@@ -141,13 +141,13 @@ export default function AdminPage() {
         {/* User Management + Exam Monitor */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-3 space-y-6">
-            <div className="bg-gray-900 rounded-lg shadow-md p-4 sm:p-6 border border-gray-800 overflow-x-auto">
+            <div className="panel rounded-lg p-4 sm:p-6 overflow-x-auto">
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
                 <div>
-                  <h2 className="text-lg font-medium text-blue-300">
+                  <h2 className="text-lg font-medium text-primary">
                     User Management
                   </h2>
-                  <p className="text-sm text-gray-400">
+                  <p className="text-sm text-muted-foreground">
                     Manage faculty and student accounts
                   </p>
                 </div>

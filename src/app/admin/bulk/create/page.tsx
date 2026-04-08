@@ -27,13 +27,13 @@ export default function BulkUserUpload() {
   };
 
   return (
-    <div className="p-6 bg-white rounded-xl shadow-md space-y-4">
+    <div className="section-shell aurora-page rounded-xl shadow-md space-y-4">
       <h2 className="text-xl font-semibold">📥 Bulk User Upload</h2>
       <input
         type="file"
         accept=".xlsx, .xls"
         onChange={(e) => setFile(e.target.files?.[0] || null)}
-        className="block w-full text-sm border border-gray-300 rounded-md p-2 focus:outline-none"
+        className="block w-full text-sm border border-border rounded-md p-2 bg-background"
       />
       <Button onClick={handleUpload} disabled={loading}>
         {loading ? "Uploading..." : "Upload & Import"}

@@ -438,12 +438,12 @@ async function handleDownloadPaper() {
 
   if (loading) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-lg bg-black/40 text-white">
+      <div className="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-lg bg-background/70 text-foreground">
         <div className="relative flex flex-col items-center">
-          <div className="absolute h-40 w-40 rounded-full bg-indigo-500/20 animate-pulse" />
+          <div className="absolute h-40 w-40 rounded-full bg-primary/20 animate-pulse" />
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-24 w-24 text-indigo-400 mb-4 animate-bounce-slow"
+            className="h-24 w-24 text-primary mb-4 animate-bounce-slow"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -452,18 +452,18 @@ async function handleDownloadPaper() {
             <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v12H3V4zM2 18h20" />
           </svg>
           <h2 className="text-2xl font-semibold">Generating Question Paper...</h2>
-          <p className="text-gray-300 mt-2">Please wait while we load the paper.</p>
+          <p className="text-muted-foreground mt-2">Please wait while we load the paper.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-indigo-950 to-black text-gray-100 p-6">
+    <div className="min-h-screen aurora-page text-foreground p-6">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <Link href="/faculty">
-            <Button variant="ghost" className="bg-transparent border border-gray-700">
+            <Button variant="ghost" className="bg-transparent border border-border">
               <ArrowLeft className="w-4 h-4" />
             </Button>
           </Link>
@@ -471,41 +471,41 @@ async function handleDownloadPaper() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Button onClick={handleDownloadPaper} className="bg-transparent border border-gray-700">
+          <Button onClick={handleDownloadPaper} className="bg-transparent border border-border text-foreground hover:bg-accent/20">
             <Printer className="w-4 h-4 mr-2" /> Print / Download PDF
           </Button>
-          <Button onClick={handleUpdatePaper} disabled={saving} className="bg-indigo-700 hover:bg-indigo-600">
+          <Button onClick={handleUpdatePaper} disabled={saving} className="bg-primary hover:bg-primary/85 text-primary-foreground">
             {saving ? (<><Loader2 className="w-4 h-4 animate-spin mr-2" /> Saving...</>) : (<><Save className="w-4 h-4 mr-2" /> Update Paper</>)}
           </Button>
         </div>
       </div>
 
-      {error && <div className="bg-red-700/20 border border-red-600 p-3 rounded mb-4 text-red-200">{error}</div>}
+      {error && <div className="bg-destructive/10 border border-destructive p-3 rounded mb-4 text-destructive">{error}</div>}
 
       <div ref={printRef} className="space-y-6">
         {/* Header area for PDF */}
-        <div className="bg-[#07101a] border border-indigo-900 rounded-lg p-6 shadow-sm">
+        <div className="panel rounded-lg p-6 shadow-sm">
           <div className="flex justify-between items-start">
             <div>
               <h2 className="text-2xl font-semibold">{exam?.title || "Untitled Exam"}</h2>
-              <div className="text-sm text-gray-400">
+              <div className="text-sm text-muted-foreground">
                 {typeof exam?.subject === "object" && exam?.subject?.name
                   ? `${exam.subject.name}${exam.subject.code ? ` (${exam.subject.code})` : ""}`
                   : ""}
               </div>
-              <div className="text-sm text-gray-500 mt-2"><div className="text-sm text-gray-500 mt-2">
+              <div className="text-sm text-muted-foreground mt-2"><div className="text-sm text-muted-foreground mt-2">
   Course: {isCourseObject(exam?.course) ? exam.course.name : (exam?.course || "N/A")} 
 </div>
 </div>
             </div>
-            <div className="text-right text-sm text-gray-400">
+            <div className="text-right text-sm text-muted-foreground">
               <div>Duration: {exam?.duration ?? "—"} min</div>
               <div>Status: {(exam?.status || "draft").toUpperCase()}</div>
             </div>
           </div>
 
           {exam?.instructions && (
-            <div className="mt-4 p-3 bg-gray-900 rounded text-sm text-gray-300 border border-gray-800">
+            <div className="mt-4 p-3 bg-card rounded text-sm text-muted-foreground border border-border">
               <strong>Instructions:</strong>
               <div className="mt-2 whitespace-pre-wrap">{exam.instructions}</div>
             </div>
@@ -513,25 +513,25 @@ async function handleDownloadPaper() {
         </div>
 
         {/* MCQs */}
-        <section className="bg-gray-900 border border-gray-800 rounded-lg p-6 shadow-sm">
+        <section className="panel rounded-lg p-6 shadow-sm">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-teal-300">MCQs</h3>
-            <div className="text-sm text-gray-400">Total: {mcqs.length}</div>
+            <h3 className="text-lg font-semibold text-chart-2">MCQs</h3>
+            <div className="text-sm text-muted-foreground">Total: {mcqs.length}</div>
           </div>
 
-          {mcqs.length === 0 && <div className="text-gray-500">No MCQs available.</div>}
+          {mcqs.length === 0 && <div className="text-muted-foreground">No MCQs available.</div>}
 
           <div className="space-y-4">
             {mcqs.map((q, i) => (
-              <div key={q.id ?? i} className="bg-[#0b1220] p-4 rounded border border-gray-800">
+              <div key={q.id ?? i} className="bg-card p-4 rounded border border-border">
                 <div className="flex justify-between items-start gap-4">
                   <div className="flex-1">
                     <div className="flex items-start gap-3">
-                      <div className="text-sm text-gray-400">Q{i + 1}.</div>
+                      <div className="text-sm text-muted-foreground">Q{i + 1}.</div>
                       <Textarea
                         value={q.question}
                         onChange={(e) => onChangeMcq(i, "question", e.target.value)}
-                        className="bg-transparent border border-gray-700 text-gray-100"
+                        className="bg-background border border-input text-foreground"
                         rows={2}
                       />
                     </div>
@@ -541,18 +541,18 @@ async function handleDownloadPaper() {
                           <Input
                             value={opt}
                             onChange={(e) => updateMcqOption(i, oi, e.target.value)}
-                            className="bg-transparent border border-gray-700 text-gray-100"
+                            className="bg-background border border-input text-foreground"
                           />
                           <button
                             onClick={() => removeMcqOption(i, oi)}
-                            className="text-red-400 px-2 py-1 rounded bg-red-900/10"
+                            className="text-destructive px-2 py-1 rounded bg-destructive/10"
                           >
                             <X className="w-4 h-4" />
                           </button>
                         </div>
                       ))}
                       <div>
-                        <Button onClick={() => addMcqOption(i)} className="bg-indigo-700 hover:bg-indigo-600">
+                        <Button onClick={() => addMcqOption(i)} className="bg-primary hover:bg-primary/85 text-primary-foreground">
                           + Option
                         </Button>
                       </div>
@@ -560,18 +560,18 @@ async function handleDownloadPaper() {
                   </div>
 
                   <div className="w-36 text-right space-y-2">
-                    <label className="text-xs text-gray-400">Marks</label>
+                    <label className="text-xs text-muted-foreground">Marks</label>
                     <Input
                       type="number"
                       value={q.marks || 0}
                       onChange={(e) => onChangeMcq(i, "marks", Number(e.target.value))}
-                      className="bg-transparent border border-gray-700 text-gray-100"
+                      className="bg-background border border-input text-foreground"
                     />
-                    <label className="text-xs text-gray-400 mt-2">Answer (optional)</label>
+                    <label className="text-xs text-muted-foreground mt-2">Answer (optional)</label>
                     <Input
                       value={q.answer || ""}
                       onChange={(e) => onChangeMcq(i, "answer", e.target.value)}
-                      className="bg-transparent border border-gray-700 text-gray-100"
+                      className="bg-background border border-input text-foreground"
                     />
                   </div>
                 </div>
@@ -581,35 +581,35 @@ async function handleDownloadPaper() {
         </section>
 
         {/* Theory */}
-        <section className="bg-gray-900 border border-gray-800 rounded-lg p-6 shadow-sm">
+        <section className="panel rounded-lg p-6 shadow-sm">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-teal-300">Theory (Short / Long)</h3>
-            <div className="text-sm text-gray-400">Total: {theory.length}</div>
+            <h3 className="text-lg font-semibold text-chart-2">Theory (Short / Long)</h3>
+            <div className="text-sm text-muted-foreground">Total: {theory.length}</div>
           </div>
 
           <div className="space-y-4">
-            {theory.length === 0 && <div className="text-gray-500">No theory questions.</div>}
+            {theory.length === 0 && <div className="text-muted-foreground">No theory questions.</div>}
             {theory.map((t, i) => (
-              <div key={t.id ?? i} className="bg-[#0b1220] p-4 rounded border border-gray-800">
+              <div key={t.id ?? i} className="bg-card p-4 rounded border border-border">
                 <div className="flex gap-4">
-                  <div className="w-10 text-gray-400">Q{mcqs.length + i + 1}.</div>
+                  <div className="w-10 text-muted-foreground">Q{mcqs.length + i + 1}.</div>
                   <div className="flex-1">
                     <Textarea
                       value={t.question}
                       onChange={(e) => onChangeTheory(i, e.target.value)}
-                      className="bg-transparent border border-gray-700 text-gray-100"
+                      className="bg-background border border-input text-foreground"
                       rows={3}
                     />
                   </div>
                   <div className="w-28">
-                    <label className="text-xs text-gray-400">Marks</label>
+                    <label className="text-xs text-muted-foreground">Marks</label>
                     <Input type="number" value={t.marks || 0} onChange={(e) => {
                       setTheory((prev) => {
                         const c = [...prev];
                         c[i] = { ...c[i], marks: Number(e.target.value) };
                         return c;
                       });
-                    }} className="bg-transparent border border-gray-700 text-gray-100" />
+                    }} className="bg-background border border-input text-foreground" />
                   </div>
                 </div>
               </div>
@@ -618,35 +618,35 @@ async function handleDownloadPaper() {
         </section>
 
         {/* Coding */}
-        <section className="bg-gray-900 border border-gray-800 rounded-lg p-6 shadow-sm">
+        <section className="panel rounded-lg p-6 shadow-sm">
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-lg font-semibold text-teal-300">Coding Questions</h3>
-            <div className="text-sm text-gray-400">Total: {coding.length}</div>
+            <h3 className="text-lg font-semibold text-chart-2">Coding Questions</h3>
+            <div className="text-sm text-muted-foreground">Total: {coding.length}</div>
           </div>
 
           <div className="space-y-4">
-            {coding.length === 0 && <div className="text-gray-500">No coding questions.</div>}
+            {coding.length === 0 && <div className="text-muted-foreground">No coding questions.</div>}
             {coding.map((c, i) => (
-              <div key={c.id ?? i} className="bg-[#0b1220] p-4 rounded border border-gray-800">
+              <div key={c.id ?? i} className="bg-card p-4 rounded border border-border">
                 <div className="flex gap-4">
-                  <div className="w-10 text-gray-400">Q{mcqs.length + theory.length + i + 1}.</div>
+                  <div className="w-10 text-muted-foreground">Q{mcqs.length + theory.length + i + 1}.</div>
                   <div className="flex-1">
                     <Textarea
                       value={c.question}
                       onChange={(e) => onChangeCoding(i, e.target.value)}
-                      className="bg-transparent border border-gray-700 text-gray-100"
+                      className="bg-background border border-input text-foreground"
                       rows={4}
                     />
                   </div>
                   <div className="w-28">
-                    <label className="text-xs text-gray-400">Marks</label>
+                    <label className="text-xs text-muted-foreground">Marks</label>
                     <Input type="number" value={c.marks || 0} onChange={(e) => {
                       setCoding((prev) => {
                         const cc = [...prev];
                         cc[i] = { ...cc[i], marks: Number(e.target.value) };
                         return cc;
                       });
-                    }} className="bg-transparent border border-gray-700 text-gray-100" />
+                    }} className="bg-background border border-input text-foreground" />
                   </div>
                 </div>
               </div>

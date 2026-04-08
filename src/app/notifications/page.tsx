@@ -77,25 +77,24 @@ const NotificationsPage: React.FC = () => {
   if (loading) {
     return (
       // Full screen background for all devices
-      <div className="min-h-screen bg-gray-950 flex justify-center items-center">
-        <p className="text-xl text-blue-400 font-medium">Loading notifications...</p>
+      <div className="min-h-screen flex justify-center items-center">
+        <p className="text-xl text-primary font-medium">Loading notifications...</p>
       </div>
     );
   }
 
   return (
-    // Main container with dark background for "black" theme
-    <div className="min-h-screen bg-gray-950 text-white p-4 sm:p-6 md:p-8">
+    <div className="min-h-screen aurora-page text-foreground p-4 sm:p-6 md:p-8">
       <div className="max-w-4xl mx-auto">
         
         {/* Header and Back Button Section */}
-        <header className="flex items-center justify-between mb-8 pb-4 border-b border-blue-900">
+        <header className="panel flex items-center justify-between mb-8 p-4 sm:p-6 border-b border-border/70">
           
           {/* Back Button (Mobile-friendly touch target) */}
           <button
             // FIX: Using native history API instead of Next.js router
             onClick={handleBack} 
-            className="flex items-center space-x-2 text-blue-400 hover:text-blue-300 transition-colors p-2 rounded-lg"
+            className="flex items-center space-x-2 text-primary hover:text-primary/80 transition-colors p-2 rounded-lg"
             aria-label="Go back to the previous page"
           >
             <ArrowLeft className="w-5 h-5 md:w-6 md:h-6" />
@@ -104,8 +103,8 @@ const NotificationsPage: React.FC = () => {
 
           {/* Title */}
           <div className="flex items-center space-x-3">
-            <Bell className="w-6 h-6 text-blue-500" />
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-white">
+            <Bell className="w-6 h-6 text-primary" />
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-foreground">
              Your Notifications 
             </h1>
           </div>
@@ -116,7 +115,7 @@ const NotificationsPage: React.FC = () => {
 
         {/* Error State */}
         {error && (
-            <div className="p-4 bg-red-900 border border-red-700 rounded-lg text-red-300 mb-8 mx-auto max-w-lg">
+            <div className="p-4 bg-destructive/10 border border-destructive/60 rounded-lg text-destructive mb-8 mx-auto max-w-lg">
                 <p className="font-semibold text-lg mb-1">Connection Error</p>
                 <p className="text-sm">{error}</p>
             </div>
@@ -124,9 +123,9 @@ const NotificationsPage: React.FC = () => {
 
         {/* Notification List */}
         {notifications.length === 0 ? (
-          <div className="text-center py-12 bg-gray-900 rounded-xl border border-blue-600/50 shadow-lg mt-10">
-            <p className="text-2xl text-blue-400 font-light">You&lsquo;re all caught up!</p>
-            <p className="text-gray-500 mt-2">No system-wide messages or alerts at this time.</p>
+          <div className="text-center py-12 panel mt-10">
+            <p className="text-2xl text-primary font-light">You&lsquo;re all caught up!</p>
+            <p className="text-muted-foreground mt-2">No system-wide messages or alerts at this time.</p>
           </div>
         ) : (
           <ul className="space-y-4">
@@ -135,19 +134,19 @@ const NotificationsPage: React.FC = () => {
               const isBlueShade = index % 2 === 0; 
               
               // Blue Card: High-contrast, vibrant
-              const blueClasses = 'bg-blue-600 text-white shadow-xl shadow-blue-500/20';
-              const blueSmallText = 'text-blue-200';
+              const blueClasses = 'bg-primary text-primary-foreground shadow-xl';
+              const blueSmallText = 'text-primary-foreground/80';
 
               // Black Card: Subtle, professional dark gray
-              const blackClasses = 'bg-gray-800 text-gray-100 border border-gray-700 shadow-lg shadow-black/30';
-              const blackSmallText = 'text-gray-400';
+              const blackClasses = 'bg-card text-card-foreground border border-border shadow-lg';
+              const blackSmallText = 'text-muted-foreground';
 
               return (
                 <li 
                   key={notif._id} 
                   className={`p-4 md:p-6 rounded-xl transition-all duration-300 cursor-pointer 
                     ${isBlueShade ? blueClasses : blackClasses}
-                    hover:scale-[1.01] hover:shadow-2xl ${isBlueShade ? 'hover:shadow-blue-500/40' : 'hover:shadow-black/60'}`} 
+                    hover:scale-[1.01] hover:shadow-2xl`} 
                 >
                   <p className="font-semibold text-base sm:text-lg">
                     {notif.message}

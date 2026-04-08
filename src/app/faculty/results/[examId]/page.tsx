@@ -310,19 +310,19 @@ export default function ExamResultsPage() {
   // ✅ 1️⃣ Show loading spinner while API is fetching
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-screen bg-slate-950 text-gray-100">
+        <div className="flex justify-center items-center h-screen text-foreground">
         <GlobalLoader/>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-gray-100 p-4 sm:p-6 lg:p-10">
+    <div className="min-h-screen aurora-page text-foreground p-4 sm:p-6 lg:p-10">
       {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
         <div className="flex items-center gap-3">
           <Link href="/faculty">
-            <Button variant="ghost" className="bg-transparent border border-gray-700">
+              <Button variant="ghost" className="bg-transparent border border-border">
               <ArrowLeft className="w-4 h-4" />
             </Button>
           </Link>
@@ -333,36 +333,36 @@ export default function ExamResultsPage() {
             <Button
               onClick={handleBundleEvaluate}
               disabled={loading}
-              className="bg-teal-600 hover:bg-teal-500 flex items-center gap-1"
+              className="bg-primary hover:bg-primary/85 text-primary-foreground flex items-center gap-1"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <BarChart2 className="w-4 h-4" />}
               Bundle Evaluate ({selectedSubmissions.length})
             </Button>
           )}
-          <Button onClick={fetchSubmissions} variant="outline" className="border border-gray-700 bg-slate-800 hover:bg-slate-800/80">
+          <Button onClick={fetchSubmissions} variant="outline" className="border border-border bg-card hover:bg-accent/20">
             Refresh
           </Button>
         </div>
       </div>
 
       {/* Table */}
-      <div className="bg-[#0b1220] border border-indigo-900 rounded-xl overflow-hidden shadow-md">
+      <div className="panel rounded-xl overflow-hidden shadow-md">
         <Table>
           <TableHeader>
-            <TableRow className="bg-indigo-900/50 hover:bg-indigo-900/60">
-              <TableHead className="w-[50px] text-white">
+            <TableRow className="bg-card hover:bg-accent/20">
+              <TableHead className="w-[50px] text-foreground">
                 <Checkbox checked={allPendingSelected} onCheckedChange={toggleSelectAll} />
               </TableHead>
-              <TableHead className="text-white">Student ID</TableHead>
-              <TableHead className="text-white">Date</TableHead>
-              <TableHead className="text-white">Status</TableHead>
-              <TableHead className="text-white">Score</TableHead>
-              <TableHead className="text-white">Action</TableHead>
+              <TableHead className="text-foreground">Student ID</TableHead>
+              <TableHead className="text-foreground">Date</TableHead>
+              <TableHead className="text-foreground">Status</TableHead>
+              <TableHead className="text-foreground">Score</TableHead>
+              <TableHead className="text-foreground">Action</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {submissions.map((s) => (
-              <TableRow key={s._id}>
+              <TableRow key={s._id} className="hover:bg-accent/10">
                 <TableCell>
                   <Checkbox
                     checked={selectedSubmissions.includes(s.studentId)}
@@ -374,10 +374,10 @@ export default function ExamResultsPage() {
                 <TableCell>{new Date(s.createdAt).toLocaleString()}</TableCell>
                 <TableCell>
                   <span
-                    className={`px-3 py-1 text-xs font-semibold rounded-full ${
+                    className={`px-2.5 py-1 text-[11px] font-semibold rounded-full ${
                       s.status === "evaluated"
-                        ? "bg-green-700 text-green-200"
-                        : "bg-yellow-700 text-yellow-200"
+                        ? "bg-chart-2/20 text-chart-2"
+                        : "bg-accent/20 text-foreground"
                     }`}
                   >
                     {s.status.toUpperCase().replace("_", " ")}
@@ -385,7 +385,7 @@ export default function ExamResultsPage() {
                 </TableCell>
                 <TableCell>
                   {s.status === "evaluated" ? (
-                    <span className="font-bold text-teal-400">
+                    <span className="font-bold text-chart-2">
                       {s.total_score} / {s.max_score}
                     </span>
                   ) : (
@@ -394,14 +394,14 @@ export default function ExamResultsPage() {
                 </TableCell>
                 <TableCell>
                   {s.status === "evaluated" ? (
-                    <Button onClick={() => handleViewResult(s)} className="bg-indigo-600 hover:bg-indigo-500 w-full">
+                    <Button onClick={() => handleViewResult(s)} variant="outline" className="border-border bg-card hover:bg-accent/20 w-full">
                       <Eye className="w-4 h-4" /> View Result
                     </Button>
                   ) : (
                     <Button
                       onClick={() => evaluateSingleSubmission(s.studentId)}
                       disabled={evaluatingId === s.studentId}
-                      className="bg-teal-600 hover:bg-teal-500 w-full"
+                      className="bg-primary hover:bg-primary/85 text-primary-foreground w-full"
                     >
                       {evaluatingId === s.studentId ? (
                         <Loader2 className="w-4 h-4 animate-spin" />

@@ -30,6 +30,12 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
+*.log
+
+# local build artifacts
+build-check.txt
+build-output.log
+final-build.log
 
 # env files (can opt-in for committing if needed)
 .env*

@@ -91,28 +91,28 @@ export default function BulkUserManagement() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white flex items-center justify-center py-10 px-6">
-      <Card className="w-full max-w-5xl bg-slate-900 border border-slate-800 shadow-2xl">
+    <div className="min-h-screen aurora-page text-foreground flex items-center justify-center py-10 px-6">
+      <Card className="w-full max-w-5xl bg-card/80 border-border shadow-2xl backdrop-blur-sm">
         <CardHeader>
           <CardTitle className="text-2xl font-bold text-white">
             Bulk User Management
           </CardTitle>
-          <CardDescription className="text-slate-400">
+          <CardDescription className="text-muted-foreground">
             Upload Excel files to create or delete multiple users at once.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="create" onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-2 bg-slate-800">
+            <TabsList className="grid w-full grid-cols-2 bg-muted/70">
               <TabsTrigger
                 value="create"
-                className="data-[state=active]:bg-green-700 text-white"
+                className="data-[state=active]:bg-chart-2 data-[state=active]:text-background text-foreground"
               >
                 <Upload className="w-4 h-4 mr-2" /> Bulk Create
               </TabsTrigger>
               <TabsTrigger
                 value="delete"
-                className="data-[state=active]:bg-red-700 text-white"
+                className="data-[state=active]:bg-destructive data-[state=active]:text-destructive-foreground text-foreground"
               >
                 <Trash2 className="w-4 h-4 mr-2" /> Bulk Delete
               </TabsTrigger>
@@ -120,12 +120,12 @@ export default function BulkUserManagement() {
 
             {/* ✅ Bulk Create */}
             <TabsContent value="create" className="mt-6">
-              <Card className="bg-slate-900 border border-slate-800">
+              <Card className="bg-card border border-border">
                 <CardHeader>
                   <CardTitle className="text-lg text-green-400">
                     Bulk Create Users
                   </CardTitle>
-                  <CardDescription className="text-slate-400">
+                  <CardDescription className="text-muted-foreground">
                     Upload an Excel file with columns like:{" "}
                     <code>firstName, lastName, email, courseName</code>.
                   </CardDescription>
@@ -136,7 +136,7 @@ export default function BulkUserManagement() {
                       type="file"
                       accept=".xlsx,.xls"
                       onChange={handleFileChange}
-                      className="text-slate-300 file:bg-slate-800 file:border file:border-slate-700 file:rounded-md file:px-3 file:py-1 file:cursor-pointer"
+                      className="text-muted-foreground file:bg-muted file:border file:border-border file:rounded-md file:px-3 file:py-1 file:cursor-pointer"
                     />
                     <Button
                       disabled={!file || loading}
@@ -155,15 +155,13 @@ export default function BulkUserManagement() {
                   </div>
 
                   {/* ✅ Status message */}
-                  {statusMsg && (
-                    <p className="mt-4 text-sm text-slate-400">{statusMsg}</p>
-                  )}
+                  {statusMsg && <p className="mt-4 text-sm text-muted-foreground">{statusMsg}</p>}
 
                   {/* ✅ Preview Table */}
                   {previewData.length > 0 && (
-                    <div className="mt-6 overflow-x-auto rounded-lg border border-slate-700">
+                    <div className="mt-6 overflow-x-auto rounded-lg border border-border">
                       <table className="w-full text-sm text-left">
-                        <thead className="bg-slate-800 text-slate-300">
+                        <thead className="bg-muted text-muted-foreground">
                           <tr>
                             {Object.keys(previewData[0]).map((key) => (
                               <th key={key} className="px-4 py-2">
@@ -176,10 +174,10 @@ export default function BulkUserManagement() {
                           {previewData.map((row, idx) => (
                             <tr
                               key={idx}
-                              className="border-t border-slate-700 hover:bg-slate-800/60"
+                              className="border-t border-border hover:bg-accent/15"
                             >
                               {Object.values(row).map((val, i) => (
-                                <td key={i} className="px-4 py-2 text-slate-400">
+                                <td key={i} className="px-4 py-2 text-muted-foreground">
                                   {String(val)}
                                 </td>
                               ))}
@@ -195,12 +193,12 @@ export default function BulkUserManagement() {
 
             {/* 🗑️ Bulk Delete */}
             <TabsContent value="delete" className="mt-6">
-              <Card className="bg-slate-900 border border-slate-800">
+              <Card className="bg-card border border-border">
                 <CardHeader>
                   <CardTitle className="text-lg text-red-400">
                     Bulk Delete Users
                   </CardTitle>
-                  <CardDescription className="text-slate-400">
+                  <CardDescription className="text-muted-foreground">
                     Upload an Excel file with a single column:{" "}
                     <code>email</code> to remove users.
                   </CardDescription>
@@ -211,7 +209,7 @@ export default function BulkUserManagement() {
                       type="file"
                       accept=".xlsx,.xls"
                       onChange={handleFileChange}
-                      className="text-slate-300 file:bg-slate-800 file:border file:border-slate-700 file:rounded-md file:px-3 file:py-1 file:cursor-pointer"
+                      className="text-muted-foreground file:bg-muted file:border file:border-border file:rounded-md file:px-3 file:py-1 file:cursor-pointer"
                     />
                     <Button
                       disabled={!file || loading}
@@ -230,15 +228,13 @@ export default function BulkUserManagement() {
                   </div>
 
                   {/* ✅ Status message */}
-                  {statusMsg && (
-                    <p className="mt-4 text-sm text-slate-400">{statusMsg}</p>
-                  )}
+                  {statusMsg && <p className="mt-4 text-sm text-muted-foreground">{statusMsg}</p>}
 
                   {/* ✅ Preview Table */}
                   {previewData.length > 0 && (
-                    <div className="mt-6 overflow-x-auto rounded-lg border border-slate-700">
+                    <div className="mt-6 overflow-x-auto rounded-lg border border-border">
                       <table className="w-full text-sm text-left">
-                        <thead className="bg-slate-800 text-slate-300">
+                        <thead className="bg-muted text-muted-foreground">
                           <tr>
                             {Object.keys(previewData[0]).map((key) => (
                               <th key={key} className="px-4 py-2">
@@ -251,10 +247,10 @@ export default function BulkUserManagement() {
                           {previewData.map((row, idx) => (
                             <tr
                               key={idx}
-                              className="border-t border-slate-700 hover:bg-slate-800/60"
+                              className="border-t border-border hover:bg-accent/15"
                             >
                               {Object.values(row).map((val, i) => (
-                                <td key={i} className="px-4 py-2 text-slate-400">
+                                <td key={i} className="px-4 py-2 text-muted-foreground">
                                   {String(val)}
                                 </td>
                               ))}

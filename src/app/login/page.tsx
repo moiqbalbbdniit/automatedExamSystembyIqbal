@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { useAuth } from "@/lib/hooks/useAuth";
 import Link from "next/link";
+import { Sparkles, ShieldCheck } from "lucide-react";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -60,14 +61,31 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-900  to-gray-900 flex items-center justify-center p-4">
-      <div className="bg-white/10 backdrop-blur-lg p-8 rounded-2xl shadow-2xl w-full max-w-md border border-white/20">
-        <h1 className="text-3xl font-bold text-center text-white mb-6">Welcome Back</h1>
-        <p className="text-center text-gray-300 mb-8 text-sm">Login to continue to your dashboard</p>
+    <div className="min-h-screen aurora-page px-4 py-10 md:px-6">
+      <div className="mx-auto grid w-full max-w-6xl gap-8 lg:grid-cols-[1.1fr_0.9fr]">
+        <section className="panel hidden p-10 lg:block">
+          <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/60 px-4 py-2 text-sm font-semibold text-muted-foreground">
+            <Sparkles className="size-4 text-primary" />
+            Smart Assessment Workspace
+          </div>
+          <h1 className="mt-6 text-5xl font-black leading-tight">Exams that feel modern, fast, and secure.</h1>
+          <p className="mt-5 max-w-lg text-muted-foreground">
+            Your new portal gives students, faculty, and admins a cleaner flow with AI-powered tools and a fresh interface.
+          </p>
+          <div className="mt-10 space-y-4 text-sm text-muted-foreground">
+            <p className="flex items-center gap-2"><ShieldCheck className="size-4 text-chart-2" /> Role-based access for student, faculty, and admin</p>
+            <p className="flex items-center gap-2"><ShieldCheck className="size-4 text-chart-2" /> Session-safe login and protected routes</p>
+            <p className="flex items-center gap-2"><ShieldCheck className="size-4 text-chart-2" /> Ready for dark/light productivity mode</p>
+          </div>
+        </section>
+
+        <div className="panel w-full max-w-xl p-8 md:p-10 lg:mx-auto">
+        <h1 className="text-center text-3xl font-extrabold mb-3">Welcome Back</h1>
+        <p className="mb-8 text-center text-sm text-muted-foreground">Login to continue to your dashboard</p>
 
         {/* Role Switcher */}
         <div className="flex justify-center mb-6">
-          <div className="flex justify-between items-center p-1 bg-gray-800/70 rounded-full shadow-inner w-full max-w-xs">
+          <div className="flex w-full max-w-xs items-center justify-between rounded-full border border-border/70 bg-muted/60 p-1">
             {roles.map((r) => (
               <button
                 key={r}
@@ -76,7 +94,7 @@ const LoginPage = () => {
                 className={`w-1/3 py-2 text-sm font-semibold capitalize rounded-full transition-all duration-300 ${
                   role === r
                     ? "text-white shadow-lg " + getRoleColor(r)
-                    : "text-gray-300 hover:text-white"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {r}
@@ -88,7 +106,7 @@ const LoginPage = () => {
         {/* Form */}
         <form onSubmit={handleLogin} className="space-y-5">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-200 mb-1">
+            <label htmlFor="email" className="mb-1 block text-sm font-medium text-muted-foreground">
               Email
             </label>
             <input
@@ -97,12 +115,12 @@ const LoginPage = () => {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="w-full px-4 py-3 rounded-lg bg-gray-900/60 text-white placeholder-gray-400 border border-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+              className="w-full rounded-xl border border-input bg-background/70 px-4 py-3 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring transition"
               placeholder="you@example.com"
             />
           </div>
           <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-200 mb-1">
+            <label htmlFor="password" className="mb-1 block text-sm font-medium text-muted-foreground">
               Password
             </label>
             <input
@@ -111,13 +129,13 @@ const LoginPage = () => {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="w-full px-4 py-3 rounded-lg bg-gray-900/60 text-white placeholder-gray-400 border border-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"
+              className="w-full rounded-xl border border-input bg-background/70 px-4 py-3 text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring transition"
               placeholder="••••••••"
             />
           </div>
           <button
             type="submit"
-            className="w-full px-4 py-3 bg-blue-800 hover:bg-blue-900 text-white font-semibold rounded-xl cursor-pointer shadow-lg transition-all duration-200 disabled:opacity-70 disabled:cursor-not-allowed"
+            className="w-full rounded-xl bg-primary px-4 py-3 font-semibold text-primary-foreground shadow-lg transition-all duration-200 hover:bg-primary/85 disabled:cursor-not-allowed disabled:opacity-70"
             disabled={loading}
           >
             {loading ? "Processing..." : "Login"}
@@ -126,16 +144,17 @@ const LoginPage = () => {
 
         {/* Footer */}
         <div className="mt-6 text-center">
-          <p className="text-sm text-gray-300">
+          <p className="text-sm text-muted-foreground">
             Don&apos;t have an account?
             <Link
               href="/signup"
-              className="text-indigo-400 hover:text-indigo-300 font-semibold ml-1 transition-colors"
+              className="ml-1 font-semibold text-primary transition-colors hover:text-primary/80"
             >
               Sign Up
             </Link>
           </p>
         </div>
+      </div>
       </div>
     </div>
   );

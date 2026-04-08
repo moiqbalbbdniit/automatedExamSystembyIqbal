@@ -208,9 +208,9 @@ useEffect(() => {
   // --- Loading/Error Handling ---
   if (loading)
     return (
-      <div className="min-h-screen bg-slate-950 flex flex-col items-center justify-center text-white">
+      <div className="min-h-screen flex flex-col items-center justify-center text-foreground">
         <p>Loading dashboard...</p>
-        <p className="text-sm opacity-70 mt-2">
+        <p className="text-sm text-muted-foreground mt-2">
           If no data appears, please log in again.
         </p>
       </div>
@@ -218,7 +218,7 @@ useEffect(() => {
 
   if (error)
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-red-500">
+      <div className="min-h-screen flex items-center justify-center text-destructive">
         <p>Error: {error}</p>
       </div>
     );
@@ -226,14 +226,14 @@ useEffect(() => {
   // --- Main Dashboard ---
   if (!activeExam) {
     return (
-      <div className="min-h-screen bg-slate-950 text-gray-100 font-sans p-6 sm:p-10">
+      <div className="min-h-screen aurora-page text-foreground font-sans p-6 sm:p-10">
         <MessageToast />
         <div className="max-w-7xl mx-auto space-y-12">
           {/* Header */}
-          <header className="p-8 bg-gradient-to-br from-indigo-900 to-gray-900 text-white rounded-3xl shadow-xl flex flex-col sm:flex-row items-center justify-between">
+          <header className="panel p-8 rounded-3xl flex flex-col sm:flex-row items-center justify-between">
             <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 rounded-full bg-gray-700 flex items-center justify-center shadow-inner">
-                <span className="text-3xl font-bold text-blue-300">
+              <div className="w-16 h-16 rounded-full bg-muted/60 flex items-center justify-center shadow-inner">
+                <span className="text-3xl font-bold text-primary">
                   {user?.firstName?.[0] ?? ""}
                   {user?.lastName?.[0] ?? ""}
                 </span>
@@ -243,7 +243,7 @@ useEffect(() => {
                   Welcome, {user?.firstName ?? "Student"}
                 </h1>
                 <h4>Course Name: {user?.course?.name ?? "N/A"}</h4>
-                <p className="text-sm opacity-90 mt-1">
+                <p className="text-sm text-muted-foreground mt-1">
                   Ready for your next challenge?
                 </p>
               </div>
@@ -251,12 +251,12 @@ useEffect(() => {
 
             <div className="mt-4 sm:mt-0 flex gap-3">
               <Link href={`/student/results/${user?.id}`}>
-                <Button className="bg-white text-blue-600 hover:bg-blue-50 font-semibold transition-transform duration-200 transform hover:scale-105 rounded-full px-6 py-3 shadow">
+                <Button className="bg-primary text-primary-foreground hover:bg-primary/85 font-semibold transition-transform duration-200 transform hover:scale-105 rounded-full px-6 py-3 shadow">
                   View Results
                 </Button>
               </Link>
               <Link href={`/student/analytics/${user?.id}`}>
-                <Button className="bg-white text-blue-600 hover:bg-blue-50 font-semibold transition-transform duration-200 transform hover:scale-105 rounded-full px-6 py-3 shadow">
+                <Button variant="outline" className="border-border bg-card/70 text-foreground hover:bg-accent/20 font-semibold transition-transform duration-200 transform hover:scale-105 rounded-full px-6 py-3 shadow">
                   View Analytics
                 </Button>
               </Link>
@@ -266,7 +266,7 @@ useEffect(() => {
           {/* Stats */}
           <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <StatCard
-              icon={<BookOpen className="w-6 h-6 text-white" />}
+              icon={<BookOpen className="w-6 h-6 text-primary" />}
               title="Exams Available"
               value={availableExams.length}
               color="text-teal-600"
@@ -293,7 +293,7 @@ useEffect(() => {
 
           {/* Upcoming Exams */}
           <section>
-            <h2 className="text-3xl font-bold text-blue-600 mb-6">
+            <h2 className="text-3xl font-bold text-primary mb-6">
               Upcoming Exams
             </h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -312,15 +312,15 @@ useEffect(() => {
                 return (
                   <Card
                     key={exam._id}
-                    className="rounded-2xl shadow-lg p-6 bg-slate-800 border border-slate-700 flex flex-col justify-between"
+                    className="rounded-2xl shadow-lg p-6 bg-card/75 border border-border flex flex-col justify-between backdrop-blur-sm"
                   >
                     <CardHeader className="p-0">
-                      <CardTitle className="text-2xl font-semibold text-blue-400 flex items-center gap-3">
+                      <CardTitle className="text-2xl font-semibold text-primary flex items-center gap-3">
                         <BookOpen className="w-7 h-7" />{" "}
                         {exam.subject?.name || "Untitled Subject"}
                       </CardTitle>
                     </CardHeader>
-                    <CardContent className="p-0 mt-4 flex-grow space-y-2 text-white">
+                    <CardContent className="p-0 mt-4 flex-grow space-y-2 text-foreground">
                       <div className="flex items-center gap-2">
                         <FileText className="w-4 h-4" />
                         <span>Duration: {exam.duration ?? "N/A"} Minutes</span>
@@ -332,7 +332,7 @@ useEffect(() => {
                     </CardContent>
 
                     {isSubmitted ? (
-                      <div className="w-full mt-6 flex items-center justify-center gap-2 py-3 bg-green-600 text-white rounded-3xl font-semibold shadow-lg">
+                      <div className="w-full mt-6 flex items-center justify-center gap-2 py-3 bg-chart-2 text-background rounded-3xl font-semibold shadow-lg">
                         <CheckCircle className="w-5 h-5" /> Already Submitted
                       </div>
                     ) : hasQuestions ? (
@@ -342,12 +342,12 @@ useEffect(() => {
                             sessionStorage.setItem("temp_exam_student_id", user.id);
                           window.open(`/student/exam/${exam._id}`, "_blank");
                         }}
-                        className="w-full mt-6 flex items-center justify-center gap-2 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-3xl"
+                        className="w-full mt-6 flex items-center justify-center gap-2 py-3 bg-primary hover:bg-primary/85 text-primary-foreground rounded-3xl"
                       >
                         <UploadCloud className="w-5 h-5" /> Start Exam
                       </Button>
                     ) : (
-                      <div className="w-full mt-6 text-center text-gray-400 text-sm">
+                      <div className="w-full mt-6 text-center text-muted-foreground text-sm">
                         Questions not yet available.
                       </div>
                     )}
@@ -377,15 +377,17 @@ function StatCard({
   color: string;
 }) {
   return (
-    <Card className="rounded-2xl shadow-lg p-6 bg-slate-800 border border-slate-700">
+    <Card className="panel rounded-2xl p-6 backdrop-blur-sm">
       <CardHeader className="p-0 pb-3">
-        <CardTitle className="text-xl font-semibold text-white flex items-center space-x-2">
-          {icon}
+        <CardTitle className="text-xl font-semibold text-foreground flex items-center space-x-2">
+          <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/70 bg-card/80">
+            {icon}
+          </span>
           <span>{title}</span>
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
-        <div className={`text-3xl font-extrabold ${color} mt-2`}>{value}</div>
+        <div className={`text-3xl font-black ${color} mt-2`}>{value}</div>
       </CardContent>
     </Card>
   );

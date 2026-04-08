@@ -44,26 +44,26 @@ const developers: Developer[] = [
 
 export default function DevelopersPage() {
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen py-10 px-4 sm:px-6 lg:px-8">
       <div className="max-w-7xl mx-auto">
         <div className="text-center">
-          <h1 className="text-4xl font-extrabold text-blue-500 sm:text-5xl lg:text-6xl tracking-tight">
+          <h1 className="text-3xl font-extrabold text-primary sm:text-5xl lg:text-6xl tracking-tight leading-tight">
             Our Development Team
           </h1>
-          <p className="mt-4 text-xl text-gray-300">
+          <p className="mt-3 text-base sm:text-lg lg:text-xl text-muted-foreground">
             Meet the talented individuals behind our platform.
           </p>
         </div>
 
-        <div className="mt-16 grid grid-cols-1 gap-12 sm:grid-cols-2 lg:grid-cols-2">
+        <div className="mt-10 sm:mt-14 grid grid-cols-1 gap-6 sm:gap-10 sm:grid-cols-2 lg:grid-cols-2">
           {developers.map((dev) => (
             <div
               key={dev.id}
-              className="bg-gray-900 rounded-lg shadow-xl overflow-hidden transform hover:scale-105 transition-transform duration-300 ease-in-out border border-blue-600"
+              className="panel overflow-hidden transform hover:scale-[1.02] transition-transform duration-300 ease-in-out"
             >
-              <div className="p-8">
+              <div className="p-5 sm:p-8">
                 <div className="flex flex-col items-center">
-                  <div className="relative w-32 h-32 rounded-full overflow-hidden border-4 border-blue-500 shadow-lg">
+                  <div className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden border-4 border-primary shadow-lg">
                     <Image
                       src={dev.image}
                       alt={`Image of ${dev.name}`}
@@ -74,30 +74,30 @@ export default function DevelopersPage() {
                       className="rounded-full"
                     />
                   </div>
-                  <h2 className="mt-6 text-3xl font-bold text-blue-400">{dev.name}</h2>
-                  <p className="mt-2 text-xl font-medium text-teal-400">{dev.role}</p>
-                  <p className="mt-4 text-gray-300 text-center max-w-md">
+                  <h2 className="mt-5 text-2xl sm:text-3xl font-bold text-primary">{dev.name}</h2>
+                  <p className="mt-2 text-base sm:text-xl font-medium text-chart-2">{dev.role}</p>
+                  <p className="mt-3 sm:mt-4 text-sm sm:text-base text-muted-foreground text-center max-w-md leading-relaxed">
                     {dev.bio}
                   </p>
                 </div>
 
-                <div className="mt-8 flex justify-center space-x-6">
+                <div className="mt-6 sm:mt-8 flex justify-center space-x-4 sm:space-x-6">
 
-                  <a href={dev.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-400 transition-colors duration-200">
-                    <Linkedin className="h-8 w-8" />
+                  <a href={dev.linkedinUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80 transition-colors duration-200">
+                    <Linkedin className="h-6 w-6 sm:h-8 sm:w-8" />
                   </a>
-                  <a href={dev.githubUrl} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:text-blue-400 transition-colors duration-200">
-                    <Github className="h-8 w-8" />
+                  <a href={dev.githubUrl} target="_blank" rel="noopener noreferrer" className="text-primary hover:text-primary/80 transition-colors duration-200">
+                    <Github className="h-6 w-6 sm:h-8 sm:w-8" />
                   </a>
-                  <a href={`mailto:${dev.email}`} className="text-blue-500 hover:text-blue-400 transition-colors duration-200">
-                    <Mail className="h-8 w-8" />
+                  <a href={`mailto:${dev.email}`} className="text-primary hover:text-primary/80 transition-colors duration-200">
+                    <Mail className="h-6 w-6 sm:h-8 sm:w-8" />
                   </a>
 
                 </div>
 
-                <div className="mt-8 pt-6 border-t border-gray-700 text-center">
-                  <p className="text-lg font-semibold text-gray-300">Contact:</p>
-                  <p className="text-blue-300 hover:text-blue-200 transition-colors duration-200">
+                <div className="mt-6 sm:mt-8 pt-5 sm:pt-6 border-t border-border/70 text-center">
+                  <p className="text-base sm:text-lg font-semibold text-muted-foreground">Contact:</p>
+                  <p className="text-sm sm:text-base text-primary hover:text-primary/80 transition-colors duration-200 break-all">
 
 
                     <a href={`mailto:${dev.email}`}>{dev.email}</a>

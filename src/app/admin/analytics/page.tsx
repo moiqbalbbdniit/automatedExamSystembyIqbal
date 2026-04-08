@@ -11,16 +11,16 @@ export default function AnalyticsPage() {
   };
 
   return (
-    <div className="relative min-h-screen bg-slate-950 p-8 flex flex-col items-center">
-      <h1 className="text-2xl font-bold text-white mb-6 text-center">
+    <div className="relative min-h-screen aurora-page p-8 flex flex-col items-center">
+      <h1 className="text-2xl font-bold text-foreground mb-6 text-center">
         Admin Analytics Dashboard
       </h1>
 
       {/* Loader Overlay */}
       {loading && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-slate-950 bg-opacity-90 z-50 transition-opacity">
-          <div className="w-12 h-12 border-4 border-slate-700 border-t-blue-500 rounded-full animate-spin mb-3"></div>
-          <p className="text-slate-300 text-sm">Loading analytics dashboard...</p>
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-background/90 z-50 transition-opacity">
+          <div className="w-12 h-12 border-4 border-border border-t-primary rounded-full animate-spin mb-3"></div>
+          <p className="text-muted-foreground text-sm">Loading analytics dashboard...</p>
         </div>
       )}
 

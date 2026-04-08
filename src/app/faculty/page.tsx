@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { PlusCircle, BookOpen, Play, Eye, Edit3 } from "lucide-react";
+import { PlusCircle, BookOpen, Play, Eye, Edit3, CheckCircle2, Clock3, Layers3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -355,16 +355,16 @@ useEffect(() => {
   // generatng question paper loader
   if (loading) {
     return (
-      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center backdrop-blur-lg bg-black/40 text-white">
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center backdrop-blur-lg bg-background/70 text-foreground">
         {/* Animated laptop with glowing data lines */}
         <div className="relative flex flex-col items-center">
           {/* Outer pulse ring */}
-          <div className="absolute h-40 w-40 rounded-full bg-indigo-500/20 animate-ping"></div>
+          <div className="absolute h-40 w-40 rounded-full bg-primary/20 animate-ping"></div>
 
           {/* Laptop icon */}
           <svg
             xmlns="http://www.w3.org/2000/svg"
-            className="h-24 w-24 text-indigo-400 animate-bounce-slow"
+            className="h-24 w-24 text-primary animate-bounce-slow"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -379,51 +379,87 @@ useEffect(() => {
 
           {/* Floating data dots */}
           <div className="absolute -top-6 flex space-x-2 animate-bounce">
-            <div className="h-2 w-2 bg-indigo-400 rounded-full"></div>
-            <div className="h-2 w-2 bg-purple-400 rounded-full delay-150"></div>
-            <div className="h-2 w-2 bg-pink-400 rounded-full delay-300"></div>
+            <div className="h-2 w-2 bg-primary rounded-full"></div>
+            <div className="h-2 w-2 bg-accent rounded-full delay-150"></div>
+            <div className="h-2 w-2 bg-chart-2 rounded-full delay-300"></div>
           </div>
         </div>
 
         {/* Loader Text */}
-        <h2 className="text-2xl mt-8 font-semibold bg-gradient-to-r from-indigo-300 to-purple-400 bg-clip-text text-transparent animate-pulse">
+        <h2 className="text-2xl mt-8 font-semibold bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent animate-pulse">
           Generating Question Paper...
         </h2>
-        <p className="text-gray-300 mt-2 animate-fadeIn">
+        <p className="text-muted-foreground mt-2 animate-fadeIn">
           Please wait while we fetch data from the AI server.
         </p>
       </div>
     );
   }
 
+  const totalExams = exams.length;
+  const publishedExams = exams.filter((exam) => exam.status === "published").length;
+  const draftExams = totalExams - publishedExams;
+  const totalPending = pendingCounts.reduce((acc, item) => acc + item.count, 0);
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-slate-900 via-indigo-950 to-black text-gray-100 p-6">
-      <div className="rounded-2xl bg-gradient-to-r from-indigo-800 to-indigo-600 p-8 shadow-xl mb-8">
+    <div className="min-h-screen aurora-page text-foreground p-6">
+      <div className="panel rounded-2xl p-8 shadow-xl mb-8">
         <h1 className="text-4xl font-bold">Faculty Dashboard</h1>
-        <p className="mt-2 text-gray-200">
+        <p className="mt-2 text-muted-foreground">
           Create and manage question papers for your students.
         </p>
         <p className="mt-4 text-lg">
-          Faculty Name: <strong className="text-white">{facultyName}</strong>
+          Faculty Name: <strong className="text-foreground">{facultyName}</strong>
         </p>
       </div>
 
-      <div className="bg-[#0b1220] border border-indigo-900 rounded-xl p-6 shadow-md mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="panel p-4">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Total Exams</p>
+          <div className="mt-2 flex items-center justify-between">
+            <p className="text-3xl font-black text-foreground">{totalExams}</p>
+            <Layers3 className="h-5 w-5 text-primary" />
+          </div>
+        </div>
+        <div className="panel p-4">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Published</p>
+          <div className="mt-2 flex items-center justify-between">
+            <p className="text-3xl font-black text-chart-2">{publishedExams}</p>
+            <CheckCircle2 className="h-5 w-5 text-chart-2" />
+          </div>
+        </div>
+        <div className="panel p-4">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Drafts</p>
+          <div className="mt-2 flex items-center justify-between">
+            <p className="text-3xl font-black text-accent">{draftExams}</p>
+            <Clock3 className="h-5 w-5 text-accent" />
+          </div>
+        </div>
+        <div className="panel p-4">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Pending Evaluations</p>
+          <div className="mt-2 flex items-center justify-between">
+            <p className="text-3xl font-black text-primary">{totalPending}</p>
+            <BookOpen className="h-5 w-5 text-primary" />
+          </div>
+        </div>
+      </div>
+
+      <div className="panel rounded-xl p-6 shadow-md mb-8">
         <div className="flex justify-between items-center mb-4">
           <div className="flex items-center gap-3">
-            <BookOpen className="w-6 h-6 text-indigo-500" />
+            <BookOpen className="w-6 h-6 text-primary" />
             <h2 className="text-2xl font-semibold">Create New Exam</h2>
           </div>
           <div>
             <Button
               onClick={openCreateModal}
-              className="bg-indigo-700 hover:bg-indigo-600 cursor-pointer"
+              className="bg-primary hover:bg-primary/85 cursor-pointer text-primary-foreground"
             >
               <PlusCircle className="w-4 h-4 mr-2" /> New Exam
             </Button>
           </div>
         </div>
-        <p className="text-gray-300">
+        <p className="text-muted-foreground">
           Quickly create an exam, generate questions automatically, preview,
           edit and publish.
         </p>
@@ -432,17 +468,17 @@ useEffect(() => {
       <Dialog open={openModal} onOpenChange={setOpenModal}>
   <DialogContent
     className="
-      bg-[#0b1220] text-gray-100 rounded-2xl
+      bg-popover text-popover-foreground rounded-2xl
       w-[95vw] max-w-3xl max-h-[90vh]
       overflow-y-auto p-6 sm:p-8
-      border border-slate-700 shadow-2xl
+      border border-border shadow-2xl
     "
   >
-    <DialogHeader className="border-b border-slate-700 pb-4 mb-4">
-      <DialogTitle className="text-indigo-400 text-2xl font-semibold tracking-wide">
+    <DialogHeader className="border-b border-border pb-4 mb-4">
+      <DialogTitle className="text-primary text-2xl font-semibold tracking-wide">
         {editingExam ? "Edit Exam" : "Create New Exam"}
       </DialogTitle>
-      <p className="text-gray-400 text-sm">
+      <p className="text-muted-foreground text-sm">
         Configure exam details, difficulty levels, and instructions below.
       </p>
     </DialogHeader>

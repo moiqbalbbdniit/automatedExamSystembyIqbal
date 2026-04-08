@@ -12,14 +12,14 @@ export default function AdminAnalytics() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-950 text-gray-100 p-6 sm:p-8">
+    <div className="min-h-screen aurora-page text-foreground p-6 sm:p-8">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl sm:text-3xl font-semibold text-blue-400">
+        <h1 className="text-2xl sm:text-3xl font-semibold text-primary">
           Admin Analytics
         </h1>
       <Link
   href="/admin"
-  className="bg-indigo-700 hover:bg-indigo-800 text-white 
+  className="bg-primary hover:bg-primary/85 text-primary-foreground 
              px-2 py-[7px] text-[10px] 
              sm:px-3 sm:py-[7px] sm:text-[10px] 
              md:px-4 md:py-[7px] md:text-[10px] 
@@ -31,7 +31,7 @@ export default function AdminAnalytics() {
 
       </div>
 
-      <p className="text-gray-400 mb-8 text-sm sm:text-base">
+      <p className="text-muted-foreground mb-8 text-sm sm:text-base">
         Explore detailed insights about exam performance, student activity, and faculty trends.
       </p>
 

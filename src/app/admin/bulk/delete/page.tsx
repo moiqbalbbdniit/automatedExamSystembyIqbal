@@ -51,8 +51,8 @@ export default function BulkUserDeletePage() {
   };
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-muted/30 p-4">
-      <Card className="w-full max-w-md shadow-lg">
+    <div className="flex justify-center items-center min-h-screen aurora-page p-4">
+      <Card className="w-full max-w-md shadow-lg bg-card/80 border-border">
         <CardHeader>
           <CardTitle className="text-center text-lg font-semibold">
             Bulk Delete Users
@@ -64,10 +64,10 @@ export default function BulkUserDeletePage() {
               type="file"
               accept=".xlsx, .xls"
               onChange={handleFileChange}
-              className="w-full cursor-pointer rounded-lg border border-gray-300 p-2"
+              className="w-full cursor-pointer rounded-lg border border-border bg-background p-2"
             />
             {file && (
-              <p className="text-sm mt-1 text-gray-500">
+              <p className="text-sm mt-1 text-muted-foreground">
                 Selected file: {file.name}
               </p>
             )}

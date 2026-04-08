@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import {
   Menu,
@@ -8,11 +9,9 @@ import {
   LogOut,
   Settings,
   Home,
-  BarChart2,
   ChevronUp,
   ChevronDown,
   Bell,
-  Brain,
   LayoutDashboard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -28,6 +27,7 @@ import { useAuth } from "@/lib/hooks/useAuth";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePathname, useRouter } from "next/navigation";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -40,17 +40,17 @@ export default function Navbar() {
   }
 
   const handleLogout = async () => {
-  try {
-    const res = await fetch("/api/auth/login", {
-      method: "DELETE",
-      credentials: "include",
-    });
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "DELETE",
+        credentials: "include",
+      });
 
       if (res.ok) {
         toast.success("Logged out successfully!");
-        localStorage.removeItem("token"); // ensure token removed
+        localStorage.removeItem("token");
         setUser(null);
-        router.push("/"); // ✅ client-side redirect (no reload)
+        router.push("/");
       } else {
         toast.error("Logout failed.");
       }
@@ -70,56 +70,70 @@ export default function Navbar() {
   const handleProtectedRoute = (path: string) => {
     if (!user) {
       toast("Please login first!");
-      router.push("/login"); // ✅ client-side navigation
+      router.push("/login");
     } else {
-      router.push(path); // ✅ fixed: no full reload
+      router.push(path);
     }
   };
 
+  const navButtonClass =
+    "rounded-full px-4 py-2 text-sm font-semibold text-foreground/85 transition-all duration-200 hover:bg-accent/35 hover:text-foreground hover:shadow-sm";
+
   return (
-    <nav className="bg-gradient-to-r from-blue-800 to-blue-900 text-white shadow-lg border-b border-blue-700">
-      <div className="container mx-auto px-6 py-4 flex justify-between items-center">
-        {/* Logo */}
+    <nav className="sticky top-0 z-40 border-b border-border/70 bg-background/80 shadow-[0_10px_30px_-20px_color-mix(in_oklch,var(--foreground)_35%,transparent)] backdrop-blur-xl">
+      <div className="mx-auto flex w-full max-w-7xl items-center justify-between px-3 py-2 sm:px-4 sm:py-2.5 md:px-6 md:py-3">
         <Link
           href="/"
-          className="flex items-center space-x-2 text-2xl font-bold tracking-wide text-white transition-all duration-300 hover:scale-105 hover:text-blue-400"
+          className="group flex items-center gap-2 rounded-2xl border border-border/70 bg-card/72 px-2 py-1.5 pr-3 shadow-lg shadow-black/5 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/35 hover:shadow-xl sm:gap-3 sm:px-2.5 sm:pr-4"
         >
-          <div className="relative w-6 h-6 md:w-7 md:h-7">
-            <Brain className="absolute top-0 left-0 w-full h-full text-blue-500 fill-blue-500/20" />
+          <div className="relative h-12 w-12 overflow-hidden rounded-xl border border-border/70 bg-background/90 ring-1 ring-primary/20 shadow-md sm:h-14 sm:w-14 md:h-16 md:w-16 lg:h-[4.5rem] lg:w-[4.5rem]">
+            <Image
+              src="/newlogo.png"
+              alt="TrueGrade AI Logo"
+              fill
+              sizes="(max-width: 640px) 48px, (max-width: 1024px) 64px, 72px"
+              className="object-contain p-1.5"
+              priority
+            />
           </div>
-          <span className="text-2xl md:text-lg lg:text-xl font-extrabold tracking-widest text-white drop-shadow-lg">
-            AI Exam System
-          </span>
+          <div className="leading-tight">
+            <span className="block text-sm font-extrabold tracking-tight text-foreground sm:text-base md:text-lg lg:text-xl">
+              TrueGrade AI
+            </span>
+            <span className="hidden text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground sm:block md:text-[0.68rem]">
+              Assessment Intelligence
+            </span>
+          </div>
         </Link>
 
-        {/* Desktop Links */}
-        <div className="hidden md:flex gap-6 items-center">
-          <Link href="/" className="flex items-center gap-1 font-medium hover:text-blue-200">
-            <Home className="w-5 h-5" /> Home
+        <div className="hidden items-center gap-2 md:flex">
+          <Link href="/" className={navButtonClass}>
+            <span className="inline-flex items-center gap-2">
+              <Home className="size-4" /> Home
+            </span>
           </Link>
 
           <button
             onClick={() => handleProtectedRoute("/notifications")}
-            className="flex items-center gap-1 font-medium hover:text-blue-200"
+            className={navButtonClass}
           >
-            <Bell className="w-5 h-5" /> Notifications
+            <span className="inline-flex items-center gap-2">
+              <Bell className="size-4" /> Notifications
+            </span>
           </button>
-
-          {/* <button
-            onClick={() => handleProtectedRoute("/student/results")}
-            className="flex items-center gap-1 font-medium hover:text-blue-200"
-          >
-            <BarChart2 className="w-5 h-5" /> Results
-          </button> */}
 
           {user && (
             <button
               onClick={() => handleProtectedRoute(getDashboardPath())}
-              className="flex items-center gap-1 font-medium hover:text-blue-200"
+              className={navButtonClass}
             >
-              <LayoutDashboard className="w-5 h-5" /> Dashboard
+              <span className="inline-flex items-center gap-2">
+                <LayoutDashboard className="size-4" /> Dashboard
+              </span>
             </button>
           )}
+
+          <ThemeToggle />
 
           {!loading && (
             <>
@@ -128,51 +142,50 @@ export default function Navbar() {
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"
-                      className="flex items-center gap-2 rounded-full px-4 py-2 text-white font-medium hover:bg-blue-700/40 transition-all duration-200"
+                      className="flex items-center gap-2 rounded-full border border-border/70 bg-card/80 px-4 py-2 font-medium text-foreground transition-all duration-200 hover:bg-accent/30"
                     >
-                      <User className="w-5 h-5" />
+                      <User className="size-4" />
                       {user.firstName || user.email.split("@")[0]}
-                      <ChevronDown className="w-4 h-4 opacity-70" />
+                      <ChevronDown className="size-4 opacity-70" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
                     align="end"
-                    className="w-48 bg-gray-900 shadow-2xl rounded-xl p-2 mt-2 text-gray-100 "
+                    className="mt-2 w-56 rounded-2xl border-border/70 bg-popover/95 p-2 text-popover-foreground shadow-xl"
                   >
-                    <DropdownMenuLabel className="text-sm font-semibold text-gray-100">
+                    <DropdownMenuLabel className="text-sm font-semibold">
                       Signed in as
-                      <div className="truncate text-gray-100">{user.email}</div>
+                      <div className="truncate text-muted-foreground">{user.email}</div>
                     </DropdownMenuLabel>
                     <DropdownMenuSeparator />
 
                     <DropdownMenuItem
                       onClick={() => router.push("/profile")}
-                      className="flex items-center gap-2 hover:bg-blue-50 rounded-lg"
+                      className="flex cursor-pointer items-center gap-2 rounded-lg"
                     >
-                      <User className="w-4 h-4 text-blue-600 hover:text-white " /> Profile
+                      <User className="size-4 text-primary" /> Profile
                     </DropdownMenuItem>
 
                     <DropdownMenuItem
-                     onClick={() => router.push("/settings")}
-                     className="flex items-center gap-2 hover:bg-blue-50 rounded-lg"
-                      >
-                      <Settings className="w-4 h-4 text-blue-600" /> Settings
-                      </DropdownMenuItem>
+                      onClick={() => router.push("/settings")}
+                      className="flex cursor-pointer items-center gap-2 rounded-lg"
+                    >
+                      <Settings className="size-4 text-primary" /> Settings
+                    </DropdownMenuItem>
 
-
-                    <DropdownMenuSeparator  />
+                    <DropdownMenuSeparator />
 
                     <DropdownMenuItem
-                      className="flex items-center gap-2 text-red-500 hover:bg-red-50 rounded-lg"
+                      className="flex cursor-pointer items-center gap-2 rounded-lg text-destructive"
                       onClick={handleLogout}
                     >
-                      <LogOut className="w-4 h-4 text-red-400" /> Logout
+                      <LogOut className="size-4" /> Logout
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               ) : (
                 <Link href="/login">
-                  <Button className="bg-blue-600 hover:bg-blue-700 rounded-full px-5 py-2 shadow-md">
+                  <Button className="rounded-full bg-primary px-5 py-2 text-primary-foreground shadow-md hover:bg-primary/85">
                     Login
                   </Button>
                 </Link>
@@ -181,16 +194,14 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Mobile Menu */}
         <button
-          className="md:hidden p-2 rounded-lg text-white hover:bg-blue-700/40"
+          className="rounded-xl border border-border/70 bg-card/70 p-2.5 text-foreground shadow-sm transition hover:bg-accent/30 md:hidden"
           onClick={() => setMenuOpen(!menuOpen)}
         >
-          {menuOpen ? <ChevronUp className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+          {menuOpen ? <ChevronUp className="size-6" /> : <Menu className="size-6" />}
         </button>
       </div>
 
-      {/* Mobile Dropdown */}
       <AnimatePresence>
         {menuOpen && (
           <motion.div
@@ -198,36 +209,33 @@ export default function Navbar() {
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeInOut" }}
-            className="md:hidden bg-gradient-to-br from-indigo-900 to-gray-900 px-6 py-4 space-y-3 overflow-hidden"
+            className="space-y-3 overflow-hidden border-t border-border/70 bg-background/95 px-6 py-4 md:hidden"
           >
-            <Link href="/" className="flex items-center gap-2 text-white hover:text-blue-200">
-              <Home className="w-5 h-5" /> Home
+            <Link href="/" className="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-accent/30">
+              <Home className="size-5" /> Home
             </Link>
 
             <button
               onClick={() => handleProtectedRoute("/notifications")}
-              className="flex items-center gap-2 text-white hover:text-blue-200"
+              className="flex w-full items-center gap-2 rounded-lg px-3 py-2 hover:bg-accent/30"
             >
-              <Bell className="w-5 h-5" /> Notifications
+              <Bell className="size-5" /> Notifications
             </button>
-
-            {/* <button
-              onClick={() => handleProtectedRoute("/student/results")}
-              className="flex items-center gap-2 text-white hover:text-blue-200"
-            >
-              <BarChart2 className="w-5 h-5" /> Results
-            </button> */}
 
             {user && (
               <button
                 onClick={() => handleProtectedRoute(getDashboardPath())}
-                className="flex items-center gap-2 text-white hover:text-blue-200"
+                className="flex w-full items-center gap-2 rounded-lg px-3 py-2 hover:bg-accent/30"
               >
-                <LayoutDashboard className="w-5 h-5" /> Dashboard
+                <LayoutDashboard className="size-5" /> Dashboard
               </button>
             )}
 
-            <hr className="border-blue-600" />
+            <div className="px-2">
+              <ThemeToggle />
+            </div>
+
+            <hr className="border-border/70" />
 
             {!loading && (
               <>
@@ -235,28 +243,28 @@ export default function Navbar() {
                   <div className="flex flex-col gap-2">
                     <button
                       onClick={() => router.push("/profile")}
-                      className="flex items-center gap-2 text-white hover:text-blue-200"
+                      className="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-accent/30"
                     >
-                      <User className="w-5 h-5 text-blue-400" /> Profile
+                      <User className="size-5 text-primary" /> Profile
                     </button>
 
                     <button
                       onClick={() => router.push("/settings")}
-                      className="flex items-center gap-2 text-white hover:text-blue-200"
+                      className="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-accent/30"
                     >
-                      <Settings className="w-5 h-5 text-blue-400" /> Settings
+                      <Settings className="size-5 text-primary" /> Settings
                     </button>
 
                     <button
-                      className="flex items-center gap-2 text-red-400 font-medium hover:text-red-200"
+                      className="flex items-center gap-2 rounded-lg px-3 py-2 font-medium text-destructive hover:bg-destructive/10"
                       onClick={handleLogout}
                     >
-                      <LogOut className="w-5 h-5 text-red-400" /> Logout
+                      <LogOut className="size-5" /> Logout
                     </button>
                   </div>
                 ) : (
-                  <Link href="/login" className="flex items-center gap-2 text-white hover:text-blue-200">
-                    <User className="w-5 h-5" /> Login
+                  <Link href="/login" className="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-accent/30">
+                    <User className="size-5" /> Login
                   </Link>
                 )}
               </>

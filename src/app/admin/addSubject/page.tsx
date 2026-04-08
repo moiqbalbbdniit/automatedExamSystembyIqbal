@@ -111,14 +111,14 @@ export default function AddSubjectPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gray-950 p-4 md:p-8 text-gray-100">
+    <div className="min-h-screen aurora-page p-4 md:p-8 text-foreground">
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-        <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2 text-blue-400">
-          <BookOpen className="w-6 h-6 text-blue-800" /> Manage Subjects
+        <h1 className="text-2xl sm:text-3xl font-bold flex items-center gap-2 text-primary">
+          <BookOpen className="w-6 h-6 text-primary" /> Manage Subjects
         </h1>
         <Link href="/admin">
-          <Button className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 w-full md:w-auto">
+          <Button className="flex items-center gap-2 bg-primary hover:bg-primary/85 w-full md:w-auto text-primary-foreground">
             <ArrowLeft className="w-4 h-4" /> Back to Dashboard
           </Button>
         </Link>
@@ -131,20 +131,20 @@ export default function AddSubjectPage() {
             placeholder="Enter subject name"
             value={subjectName}
             onChange={(e) => setSubjectName(e.target.value)}
-            className="flex-1 bg-gray-900 border border-gray-700 text-gray-100 placeholder:text-gray-300 focus:ring-2 focus:ring-blue-500"
+            className="flex-1 bg-background border border-border text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring"
           />
           <Input
             placeholder="Enter subject code"
             value={subjectCode}
             onChange={(e) => setSubjectCode(e.target.value)}
-            className="flex-1 bg-gray-900 border border-gray-700 text-gray-100 placeholder:text-gray-300 focus:ring-2 focus:ring-blue-500"
+            className="flex-1 bg-background border border-border text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring"
           />
 
           <Select value={selectedFaculty} onValueChange={setSelectedFaculty}>
-            <SelectTrigger className="w-full sm:w-60 bg-gray-900 border border-gray-700 text-gray-100 focus:ring-2 focus:ring-blue-500">
+            <SelectTrigger className="w-full sm:w-60 bg-background border border-border text-foreground focus:ring-2 focus:ring-ring">
               <SelectValue placeholder="Assign Faculty" />
             </SelectTrigger>
-            <SelectContent className="bg-gray-900 border border-gray-700 text-gray-100">
+            <SelectContent className="bg-popover border border-border text-popover-foreground">
               {faculties.map((f) => (
                 <SelectItem key={f._id} value={f._id}>
                   {f.name} ({f.department})
@@ -164,11 +164,11 @@ export default function AddSubjectPage() {
               value={newTopic}
               onChange={(e) => setNewTopic(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleAddTopic()}
-              className="flex-1 bg-gray-900 border border-gray-700 text-gray-100 placeholder:text-gray-300 focus:ring-2 focus:ring-blue-500"
+              className="flex-1 bg-background border border-border text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring"
             />
             <Button
               onClick={handleAddTopic}
-              className="bg-blue-600 hover:bg-blue-700 flex items-center justify-center"
+              className="bg-primary hover:bg-primary/85 text-primary-foreground flex items-center justify-center"
             >
               <PlusCircle className="w-4 h-4" />
             </Button>
@@ -178,7 +178,7 @@ export default function AddSubjectPage() {
             {topics.map((t, idx) => (
               <span
                 key={idx}
-                className="px-3 py-1 bg-gray-800 text-sm rounded-full flex items-center gap-2"
+                className="px-3 py-1 bg-muted text-sm rounded-full flex items-center gap-2"
               >
                 {t}
                 <X
@@ -192,7 +192,7 @@ export default function AddSubjectPage() {
       </div>
             <Button
             onClick={handleAddSubject}
-            className="bg-blue-600 hover:bg-blue-700 cursor-pointer w-full sm:w-auto flex items-center gap-2 justify-center mb-6"
+            className="bg-primary hover:bg-primary/85 text-primary-foreground cursor-pointer w-full sm:w-auto flex items-center gap-2 justify-center mb-6"
           >
             <PlusCircle className="w-4 h-4" /> Add Subject
           </Button>
@@ -202,13 +202,13 @@ export default function AddSubjectPage() {
         placeholder="Search subjects..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="w-full md:w-64 mb-4 bg-gray-900 border border-gray-700 text-gray-100 placeholder:text-gray-300 focus:ring-2 focus:ring-blue-500"
+        className="w-full md:w-64 mb-4 bg-background border border-border text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-ring"
       />
 
       {/* Subjects Table */}
-      <div className="overflow-x-auto rounded-lg shadow-lg border border-gray-800 bg-gray-900">
-        <table className="w-full text-gray-100">
-          <thead className="bg-gray-900 text-sm text-gray-400">
+      <div className="panel overflow-x-auto rounded-lg shadow-lg">
+        <table className="w-full text-foreground">
+          <thead className="bg-card text-sm text-muted-foreground">
             <tr>
               <th className="py-3 px-4 text-left">Code</th>
               <th className="py-3 px-4 text-left">Subject</th>
@@ -217,7 +217,7 @@ export default function AddSubjectPage() {
               <th className="py-3 px-4 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-700">
+          <tbody className="divide-y divide-border">
             {filteredSubjects.map((s, idx) => (
               <tr
                 key={s._id}

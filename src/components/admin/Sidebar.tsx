@@ -14,7 +14,7 @@ export default function Sidebar() {
     <aside className="w-64 bg-gray-900 border-r border-gray-800 min-h-screen p-6 flex flex-col">
       {/* Logo / Header */}
       <div className="mb-8">
-        <div className="text-lg font-bold text-teal-400">AI Exam System</div>
+        <div className="text-lg font-bold text-teal-400">TrueGrade AI</div>
         <p className="text-sm text-gray-400 mt-1">Admin Console</p>
       </div>
 

@@ -4,25 +4,23 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   BarChart3,
-  FileText,
-  Users,
   Brain,
-  BookOpen,
-  PieChart,
   CheckCircle,
-  Shield, // New icon for security
-  Zap, // New icon for speed/automation
+  Shield,
+  Zap,
+  Sparkles,
+  ArrowRight,
+  ScanSearch,
 } from "lucide-react";
-import Link from "next/link"; 
+import Link from "next/link";
 import { motion, Variants } from "framer-motion";
-import { useState, useEffect } from "react"; // Added useState and useEffect for slideshow logic
+import { useState, useEffect } from "react";
 
 const IMAGE_SOURCES = [
-  "/assests/uni2.jpg", 
-  "/assests/uni3.jpg", 
+  "/assests/uni2.jpg",
+  "/assests/uni3.jpg",
 ];
 
-// Animation settings
 const sectionVariants: Variants = {
   hidden: { opacity: 0, y: 40 },
   visible: {
@@ -41,134 +39,147 @@ const cardVariants: Variants = {
     scale: 1,
     opacity: 1,
     transition: {
-      duration: 0.6,
-      delay: i * 0.2 + 0.5,
+      duration: 0.5,
+      delay: i * 0.08,
     },
   }),
 };
 
 export default function HomePage() {
-  // State for the current image index
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
-  // Effect to automatically advance the slideshow
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentImageIndex(prevIndex => (prevIndex + 1) % IMAGE_SOURCES.length);
-    }, 4000); // Advances image every 2 seconds (2000ms)
+      setCurrentImageIndex((prevIndex) => (prevIndex + 1) % IMAGE_SOURCES.length);
+    }, 4200);
 
-    return () => clearInterval(timer); // Cleanup function
+    return () => clearInterval(timer);
   }, []);
 
   return (
-    <main className="min-h-screen bg-slate-950 text-gray-100 font-sans">
-      {/* 1. HERO SECTION: Trust, Value, and Image */}
-      <section className="relative flex flex-col items-center justify-center py-28 md:py-40 text-center overflow-hidden bg-gradient-to-br from-slate-900 to-blue-950 shadow-2xl">
-        <div className="relative z-10 p-6 max-w-7xl mx-auto">
-          <motion.h1
-            initial={{ opacity: 0, y: -30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            className="text-5xl md:text-7xl font-extrabold tracking-tighter text-blue-400"
-          >
-            AI-Powered Assessment for University Exams
-          </motion.h1>
-          <motion.p
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.3 }}
-            className="mt-6 text-xl text-gray-300 max-w-4xl mx-auto"
-          >
-            Automate question paper generation, ensure integrity with AI proctoring, and deliver instant, reliable results to students and faculty.
-          </motion.p>
-          
-          {/* 3. The Discrete Slideshow Container */}
+    <main className="min-h-screen text-foreground">
+      <section className="relative overflow-hidden pb-16 pt-20 md:pb-24 md:pt-28">
+        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_20%_20%,color-mix(in_oklch,var(--primary)_20%,transparent)_0%,transparent_38%),radial-gradient(circle_at_85%_5%,color-mix(in_oklch,var(--accent)_28%,transparent)_0%,transparent_40%)]" />
+        <div className="mx-auto grid max-w-7xl gap-12 px-6 lg:grid-cols-[1.12fr_1fr] lg:items-center">
+          <div>
+            <motion.div
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-4 inline-flex items-center gap-2 rounded-full border border-border/70 bg-card/75 px-4 py-2 text-sm font-semibold text-muted-foreground"
+            >
+              <Sparkles className="size-4 text-primary" />
+              AI-ready university exam platform
+            </motion.div>
+
+            <motion.h1
+              initial={{ opacity: 0, y: -30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8 }}
+              className="text-4xl font-extrabold leading-tight tracking-tight md:text-6xl"
+            >
+              Reinvent assessments with design-led intelligence
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="mt-6 max-w-2xl text-base text-muted-foreground md:text-lg"
+            >
+              Build secure examinations, generate high-quality papers with AI, and deliver instant evaluation analytics across students, faculty, and administrators.
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.45 }}
+              className="mt-10 flex flex-wrap items-center gap-4"
+            >
+              <Link href="/login">
+                <Button size="lg" className="group rounded-full px-6 text-primary-foreground">
+                  Get Started
+                  <ArrowRight className="ml-1 size-4 transition-transform group-hover:translate-x-0.5" />
+                </Button>
+              </Link>
+              <Link href="/contact">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="rounded-full border-border/80 bg-card/70 px-6"
+                >
+                  Learn More
+                </Button>
+              </Link>
+            </motion.div>
+          </div>
+
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.94 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 1, delay: 0.8 }}
-            className="mt-12 mx-auto w-full max-w-6xl h-64 md:h-96 bg-slate-900 border-2 border-blue-600 rounded-2xl shadow-xl shadow-blue-900/50 flex items-center justify-center overflow-hidden relative"
+            transition={{ duration: 0.9, delay: 0.2 }}
+            className="panel relative overflow-hidden p-2"
           >
-            {/* Motion.img for the discrete transition effect */}
-            <motion.img 
-              key={currentImageIndex} // Key change triggers the transition
-              src={IMAGE_SOURCES[currentImageIndex]} 
-              alt={`AI System Visual ${currentImageIndex + 1}`} 
-              className="absolute inset-0 w-full h-full object-cover"
-              // Discrete transition animation (fade and slight scale)
-              initial={{ opacity: 0, scale: 1.05 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-              onError={(e) => {
-                // Fallback for image loading failure
-                e.currentTarget.style.display = 'none';
-                console.log(`Image failed to load: ${IMAGE_SOURCES[currentImageIndex]}`);
-              }}
-            />
-          </motion.div>
+            <div className="relative h-72 overflow-hidden rounded-xl md:h-[28rem]">
+              <motion.img
+                key={currentImageIndex}
+                src={IMAGE_SOURCES[currentImageIndex]}
+                alt={`AI System Visual ${currentImageIndex + 1}`}
+                className="absolute inset-0 h-full w-full object-cover"
+                initial={{ opacity: 0, scale: 1.06 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+                onError={(e) => {
+                  e.currentTarget.style.display = "none";
+                }}
+              />
 
-
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 1.2 }}
-            className="mt-20 flex gap-4 justify-center"
-          >
-            {/* CTA focused on Institutional Use */}
-       <Link href="/login">
-              <Button
-                size="lg"
-                className="bg-blue-600 hover:bg-blue-700 text-white rounded-xl cursor-pointer shadow-lg transition-transform duration-300 transform hover:-translate-y-1"
-              >
-                Get Started
-              </Button>
-            </Link>
-            <Link href="/contact">
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-blue-400 bg-blue-950 rounded-xl cursor-pointer transition-transform duration-300 transform hover:-translate-y-1"
-              >
-                Learn More
-              </Button>
-            </Link>
-
+              <div className="absolute inset-x-4 bottom-4 panel flex items-center justify-between px-4 py-3">
+                <span className="text-xs font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                  Live campus-ready system
+                </span>
+                <ScanSearch className="size-4 text-primary" />
+              </div>
+            </div>
           </motion.div>
         </div>
       </section>
 
-      {/* 2. CORE VALUE PROPOSITION SECTION (4-Blocks) */}
       <motion.section
         id="features"
-        className="py-24 bg-slate-900"
+        className="py-20"
         initial="hidden"
         whileInView="visible"
-        viewport={{ once: true, amount: 0.3 }}
+        viewport={{ once: true, amount: 0.2 }}
         variants={sectionVariants}
       >
-        <div className="max-w-7xl mx-auto px-8">
-          <h2 className="text-4xl font-bold text-center mb-16 text-blue-400">
-            Intelligent Features to Transform Assessment
-          </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+        <div className="mx-auto max-w-7xl px-6">
+          <motion.h1
+            initial={{ opacity: 0, y: 10 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-center text-3xl font-bold md:text-4xl"
+          >
+            Intelligent features that move your exam workflow forward
+          </motion.h1>
+          <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {[
               {
-                icon: <Zap className="w-10 h-10 text-green-400" />,
+                icon: <Zap className="size-10 text-primary" />,
                 title: "AI Paper Generation",
                 desc: "Generate balanced, diverse question papers instantly, tailored by topic and difficulty.",
               },
               {
-                icon: <Shield className="w-10 h-10 text-red-400" />,
+                icon: <Shield className="size-10 text-chart-5" />,
                 title: "Secure Proctored Exams",
                 desc: "Ensure academic integrity with real-time AI monitoring and unauthorized tab-switching detection.",
               },
               {
-                icon: <CheckCircle className="w-10 h-10 text-blue-400" />,
+                icon: <CheckCircle className="size-10 text-chart-2" />,
                 title: "Automated Evaluation",
                 desc: "Instant grading for MCQs and Coding tests, reducing faculty workload and speeding up results.",
               },
               {
-                icon: <BarChart3 className="w-10 h-10 text-yellow-400" />,
+                icon: <BarChart3 className="size-10 text-accent" />,
                 title: "Actionable Analytics",
                 desc: "Identify student weak spots, track performance trends, and analyze exam effectiveness.",
               },
@@ -181,16 +192,14 @@ export default function HomePage() {
                 whileInView="visible"
                 viewport={{ once: true }}
               >
-                <Card className="h-full bg-slate-800 border-t-4 border-blue-600 rounded-xl shadow-xl hover:shadow-blue-500/30 transition-all duration-300 transform hover:-translate-y-1">
+                <Card className="h-full rounded-2xl border-border/70 bg-card/70 shadow-xl backdrop-blur-md transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl">
                   <CardHeader className="flex flex-col items-start p-6">
                     {feature.icon}
-                    <CardTitle className="text-xl text-white font-semibold mt-4">
+                    <CardTitle className="mt-4 text-xl font-semibold">
                       {feature.title}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="text-gray-300 px-6 pb-6">
-                    {feature.desc}
-                  </CardContent>
+                  <CardContent className="px-6 pb-6 text-muted-foreground">{feature.desc}</CardContent>
                 </Card>
               </motion.div>
             ))}
@@ -198,108 +207,100 @@ export default function HomePage() {
         </div>
       </motion.section>
 
-      {/* 3. DEDICATED FEATURE DEEP DIVE: Trust & Integrity */}
       <motion.section
-        className="py-24 bg-slate-950"
+        className="py-24"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.3 }}
         variants={sectionVariants}
       >
-        <div className="max-w-7xl mx-auto px-8 grid lg:grid-cols-2 gap-16 items-center">
-          
-          {/* Left Block: AI Generation */}
-          <motion.div 
-            className="space-y-6"
+        <div className="mx-auto grid max-w-7xl items-center gap-10 px-6 lg:grid-cols-2">
+          <motion.div
+            className="panel space-y-6 p-8"
             initial={{ opacity: 0, x: -50 }}
             whileInView={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
           >
-            <h3 className="text-3xl font-bold text-blue-400 flex items-center">
-              <Brain className="w-8 h-8 mr-3 text-blue-600" />
+            <h3 className="flex items-center text-2xl font-bold md:text-3xl">
+              <Brain className="mr-3 size-7 text-primary" />
               Intelligence in Question Design
             </h3>
-            <p className="text-gray-300 text-lg">
+            <p className="text-base text-muted-foreground md:text-lg">
               Our proprietary model goes beyond simple randomization. It analyzes student and course data to generate questions that align with specific learning outcomes (MCQ, Theory, Coding), guaranteeing a fair and comprehensive assessment every time.
             </p>
-            <ul className="list-disc list-inside text-gray-400 space-y-2 ml-4">
+            <ul className="ml-4 list-disc space-y-2 text-muted-foreground">
               <li>Auto-mapping questions to curriculum objectives.</li>
               <li>Support for diverse question types, including complex coding challenges.</li>
               <li>Difficulty balancing based on Bloom's Taxonomy.</li>
             </ul>
           </motion.div>
 
-          {/* Right Block: Security */}
-          <motion.div 
-            className="space-y-6"
+          <motion.div
+            className="panel space-y-6 p-8"
             initial={{ opacity: 0, x: 50 }}
             whileInView={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8 }}
             viewport={{ once: true }}
           >
-            <h3 className="text-3xl font-bold text-blue-400 flex items-center">
-              <Shield className="w-8 h-8 mr-3 text-red-600" />
+            <h3 className="flex items-center text-2xl font-bold md:text-3xl">
+              <Shield className="mr-3 size-7 text-chart-5" />
               Uncompromising Academic Integrity
             </h3>
-            <p className="text-gray-300 text-lg">
+            <p className="text-base text-muted-foreground md:text-lg">
               Deployment is built for high-stakes examinations. The system features multi-layer security to prevent cheating, including real-time video/audio analysis, suspicious activity flagging, and lockdown browser functionality.
             </p>
-            <ul className="list-disc list-inside text-gray-400 space-y-2 ml-4">
+            <ul className="ml-4 list-disc space-y-2 text-muted-foreground">
               <li>AI Proctored monitoring (webcam & screen).</li>
               <li>Instant alerts for unauthorized applications or devices.</li>
               <li>Secure, encrypted data handling.</li>
             </ul>
           </motion.div>
-
         </div>
       </motion.section>
-      
-      {/* 4. Testimonials (Kept similar structure, updated text) */}
+
       <motion.section
-        className="py-24 bg-slate-900"
+        className="py-24"
         initial="hidden"
         whileInView="visible"
         viewport={{ once: true, amount: 0.3 }}
         variants={sectionVariants}
       >
-        <div className="max-w-7xl mx-auto px-8 text-center">
-          <h2 className="text-4xl font-bold mb-16 text-blue-400">
+        <div className="mx-auto max-w-7xl px-6 text-center">
+          <h2 className="mb-16 text-3xl font-bold md:text-4xl">
             Trusted by Educators & Students
           </h2>
-          <div className="grid md:grid-cols-2 gap-10">
-            <Card className="bg-slate-800 border border-slate-700 rounded-2xl shadow-lg p-8 hover:shadow-blue-500/20 transition-all duration-300">
-             <CardContent className="p-0 text-gray-300 italic text-lg">
+          <div className="grid gap-8 md:grid-cols-2">
+            <Card className="rounded-2xl border-border/70 bg-card/70 p-8 text-left shadow-lg backdrop-blur-md transition-all duration-300 hover:shadow-2xl">
+              <CardContent className="p-0 text-lg italic text-muted-foreground">
                 &quot;The AI-powered analytics saved our faculty countless hours. It’s a game-changer for academic assessment.&ldquo;
-                <p className="mt-6 font-semibold text-blue-300 not-italic text-lg">
+                <p className="mt-6 text-lg font-semibold not-italic text-primary">
                   - Dr. Anjali Rao, Head of CS Deptartment
                 </p>
               </CardContent>
             </Card>
-            <Card className="bg-slate-800 border border-slate-700 rounded-2xl shadow-lg p-8 hover:shadow-blue-500/20 transition-all duration-300">
-              <CardContent className="p-0 text-gray-300 italic text-lg">
+            <Card className="rounded-2xl border-border/70 bg-card/70 p-8 text-left shadow-lg backdrop-blur-md transition-all duration-300 hover:shadow-2xl">
+              <CardContent className="p-0 text-lg italic text-muted-foreground">
                 &quot;Taking exams on this platform was smooth and stress-free. The interface is simple and easy to navigate.&quot;
-                <p className="mt-6 font-semibold text-blue-300 not-italic text-lg">
+                <p className="mt-6 text-lg font-semibold not-italic text-primary">
                   - Karan Sharma, B.Tech Student
                 </p>
               </CardContent>
-
             </Card>
           </div>
         </div>
       </motion.section>
 
-      {/* 5. FINAL CTA SECTION */}
-      <section className="py-20 bg-blue-900 text-white text-center">
-        <div className="max-w-4xl mx-auto px-6">
-          <h2 className="text-4xl font-bold mb-4">
+      <section className="pb-24 pt-8 text-center">
+        <div className="panel mx-auto max-w-4xl px-6 py-12">
+          <h2 className="mb-4 text-3xl font-bold md:text-4xl">
             Ready to Revolutionize Your Assessment?
           </h2>
-          <p className="mb-8 text-xl text-blue-100">
+          <p className="mb-8 text-lg text-muted-foreground md:text-xl">
             Contact our team to integrate AI-powered exam management into your university.
           </p>
           <a href="/contact">
-            <Button className="bg-white text-blue-800 font-semibold text-lg rounded-xl cursor-pointer hover:bg-gray-200 transition-transform duration-300 transform hover:scale-105 shadow-2xl shadow-white/30">
+            <Button className="rounded-full px-8 text-lg font-semibold text-primary-foreground transition-transform duration-300 hover:scale-105">
               Schedule Your Free Consultation
             </Button>
           </a>

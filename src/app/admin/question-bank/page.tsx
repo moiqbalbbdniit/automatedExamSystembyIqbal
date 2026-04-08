@@ -218,13 +218,13 @@ const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
   // Render
   // --------------------------------
   return (
-    <div className="p-4 md:p-6 bg-gray-950 min-h-screen text-gray-100 space-y-6">
+    <div className="p-4 md:p-6 min-h-screen aurora-page text-foreground space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <h1 className="text-2xl font-bold flex items-center gap-2 text-blue-400">
-          <BookOpen className="w-6 h-6 text-teal-400" /> Question Bank & Subjects
+        <h1 className="text-2xl font-bold flex items-center gap-2 text-primary">
+          <BookOpen className="w-6 h-6 text-chart-2" /> Question Bank & Subjects
         </h1>
         <Link href="/admin">
-          <Button className="bg-blue-600 hover:bg-blue-700 flex gap-2">
+          <Button className="bg-primary hover:bg-primary/85 text-primary-foreground flex gap-2">
             <ArrowLeft className="w-4 h-4" /> Back
           </Button>
         </Link>
@@ -232,12 +232,12 @@ const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 
       {/* Upload section */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
-        <label className="flex items-center gap-2 px-4 py-2 border rounded-md cursor-pointer bg-gray-900 hover:bg-gray-800 text-gray-100 w-full sm:w-auto">
-          <Upload className="w-4 h-4 text-blue-400" />
+        <label className="flex items-center gap-2 px-4 py-2 border border-border rounded-md cursor-pointer bg-card hover:bg-accent/10 text-foreground w-full sm:w-auto">
+          <Upload className="w-4 h-4 text-primary" />
           <span>{isUploading ? "Extracting..." : "Upload Question Bank (PDF)"}</span>
           <input type="file" accept="application/pdf" hidden onChange={handleUpload} />
         </label>
-        {isUploading && <Loader2 className="animate-spin text-blue-400" />}
+        {isUploading && <Loader2 className="animate-spin text-primary" />}
       {uploadedFileName && !isUploading && (
     <span className="text-sm text-gray-400">
         Ready to review: {uploadedFileName} 
@@ -247,9 +247,9 @@ const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 
       {/* Review Dialog */}
       <Dialog open={isReviewOpen} onOpenChange={setIsReviewOpen}>
-        <DialogContent className="sm:max-w-[600px] bg-gray-900 border-gray-700 text-gray-100">
+        <DialogContent className="sm:max-w-[600px] bg-popover border-border text-popover-foreground">
           <DialogHeader>
-            <DialogTitle className="text-blue-500 flex gap-2 items-center">
+            <DialogTitle className="text-primary flex gap-2 items-center">
               <Eye className="w-4 h-4" /> Review Extracted Subject
             </DialogTitle>
           </DialogHeader>
@@ -259,7 +259,7 @@ const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
               placeholder="Subject Code"
               value={reviewCode}
               onChange={(e) => setReviewCode(e.target.value)}
-              className="bg-gray-800 border-gray-700"
+              className="bg-background border-border"
             />
 
 
@@ -267,14 +267,14 @@ const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
               placeholder="Subject Name"
               value={reviewName}
               onChange={(e) => setReviewName(e.target.value)}
-              className="bg-gray-800 border-gray-700"
+              className="bg-background border-border"
             />
 
             <Select value={reviewFacultyId} onValueChange={setReviewFacultyId}>
-              <SelectTrigger className="bg-gray-800 border-gray-700">
+              <SelectTrigger className="bg-background border-border">
                 <SelectValue placeholder="Assign Faculty"  className="text-white"/>
               </SelectTrigger>
-              <SelectContent className="bg-gray-900 border-gray-700 text-white">
+              <SelectContent className="bg-popover border-border text-popover-foreground">
                 {faculties.map(f => (
                   <SelectItem key={f._id} value={f._id}>
                     {f.name} ({f.department})
@@ -284,16 +284,16 @@ const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
             </Select>
             {/* Topics */}
             <div>
-              <p className="text-sm font-medium text-gray-300">Topics:</p>
+              <p className="text-sm font-medium text-muted-foreground">Topics:</p>
               <div className="flex gap-2 mt-2">
                 <Input
                   placeholder="Add topic"
                   value={newReviewTopic}
                   onChange={(e) => setNewReviewTopic(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleAddReviewTopic()}
-                  className="bg-gray-800 border-gray-700 flex-1"
+                  className="bg-background border-border flex-1"
                 />
-                <Button onClick={handleAddReviewTopic} className="bg-blue-600 hover:bg-blue-700">
+                <Button onClick={handleAddReviewTopic} className="bg-primary hover:bg-primary/85 text-primary-foreground">
                   <PlusCircle className="w-4 h-4" />
                 </Button>
               </div>
@@ -301,7 +301,7 @@ const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
                 {reviewTopics.map((t, i) => (
                   <span
                     key={i}
-                    className="px-3 py-1 bg-gray-800 border border-blue-600 text-sm rounded-full flex items-center gap-2"
+                    className="px-3 py-1 bg-muted border border-border text-sm rounded-full flex items-center gap-2"
                   >
                     {t}
                     <X className="w-3 h-3 text-red-400 cursor-pointer" onClick={() => handleRemoveReviewTopic(t)} />
@@ -314,13 +314,13 @@ const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
             <Button
               variant="outline"
               onClick={() => setIsReviewOpen(false)}
-              className="bg-gray-800 border-gray-700"
+              className="bg-background border-border"
             >
               Cancel
             </Button>
             <Button
               onClick={handlePublishSubject}
-              className="bg-blue-600 hover:bg-blue-700"
+              className="bg-primary hover:bg-primary/85 text-primary-foreground"
               disabled={!reviewName || !reviewCode || !reviewFacultyId || reviewTopics.length === 0}
             >
               Publish
@@ -334,29 +334,29 @@ const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         placeholder="Search subjects..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
-        className="bg-gray-900 border-gray-700 w-full md:w-72"
+        className="bg-background border-border w-full md:w-72"
       />
 
       {/* Subjects Table */}
-      <div className="overflow-x-auto bg-gray-900 rounded-lg border border-gray-800 mt-4">
+      <div className="panel overflow-x-auto rounded-lg mt-4">
         <table className="w-full text-left">
-          <thead className="text-gray-400 text-sm border-b border-gray-800">
+          <thead className="text-muted-foreground text-sm border-b border-border">
             <tr>
-              <th className="py-3 px-4">Code</th>
-              <th className="py-3 px-4">Name</th>
-              <th className="py-3 px-4">Topics</th>
-              <th className="py-3 px-4">Faculty</th>
-              <th className="py-3 px-4 text-right">Actions</th>
+              <th className="py-2.5 px-4">Code</th>
+              <th className="py-2.5 px-4">Name</th>
+              <th className="py-2.5 px-4">Topics</th>
+              <th className="py-2.5 px-4">Faculty</th>
+              <th className="py-2.5 px-4 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-800">
+          <tbody className="divide-y divide-border">
             {filtered.map((s, idx) => (
-              <tr key={s._id} className={idx % 2 ? "bg-gray-950" : ""}>
-                <td className="py-3 px-4 text-gray-300">{s.code}</td>
-                <td className="py-3 px-4 text-gray-100 font-medium">{s.name}</td>
-                <td className="py-3 px-4 text-gray-400 truncate">{s.topics?.join(", ")}</td>
-                <td className="py-3 px-4 text-gray-300">{s.faculty?.name || "—"}</td>
-                <td className="py-3 px-4 text-right space-x-2">
+              <tr key={s._id} className={`${idx % 2 ? "bg-muted/18" : ""} hover:bg-accent/12 transition-colors`}>
+                <td className="py-2.5 px-4 text-muted-foreground">{s.code}</td>
+                <td className="py-2.5 px-4 text-foreground font-medium">{s.name}</td>
+                <td className="py-2.5 px-4 text-muted-foreground truncate">{s.topics?.join(", ")}</td>
+                <td className="py-2.5 px-4 text-muted-foreground">{s.faculty?.name || "—"}</td>
+                <td className="py-2.5 px-4 text-right space-x-2">
                   <button onClick={() => handleEditClick(s)} className="text-blue-500 hover:text-blue-400">
                     <Edit3 className="w-4 h-4" />
                   </button>
@@ -368,7 +368,7 @@ const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={5} className="py-4 text-center text-gray-500">
+                <td colSpan={5} className="py-8 text-center text-muted-foreground text-sm">
                   No subjects found.
                 </td>
               </tr>

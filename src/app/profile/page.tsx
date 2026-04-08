@@ -16,7 +16,7 @@ const Input: React.FC<{
   name: string;
 }> = ({ label, type = "text", value, onChange, placeholder, disabled = false, name }) => (
   <div className="space-y-1 w-full">
-    <label className="text-sm font-medium text-indigo-300">{label}</label>
+    <label className="text-sm font-medium text-muted-foreground">{label}</label>
     <input
       type={type}
       name={name}
@@ -24,8 +24,8 @@ const Input: React.FC<{
       onChange={onChange}
       placeholder={placeholder}
       disabled={disabled}
-      className="w-full px-4 py-2 bg-slate-900 border border-indigo-700/50 rounded-lg text-white placeholder-gray-500 
-                 focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition duration-150 ease-in-out disabled:opacity-50"
+      className="w-full rounded-xl border border-input bg-background/70 px-4 py-2 text-foreground placeholder:text-muted-foreground
+             focus:ring-2 focus:ring-ring transition duration-150 ease-in-out disabled:opacity-50"
     />
   </div>
 );
@@ -43,7 +43,7 @@ const Button: React.FC<{
     disabled={disabled}
     className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-3 font-semibold rounded-xl 
                 transition-all duration-200 text-white
-                ${disabled ? "bg-gray-600 cursor-not-allowed" : "bg-blue-800 hover:bg-blue-900 shadow-lg hover:shadow-blue-500/30"} 
+                ${disabled ? "bg-muted cursor-not-allowed" : "bg-primary hover:bg-primary/85 shadow-lg"} 
                 ${className}`}
   >
     {children}
@@ -54,8 +54,8 @@ const Message: React.FC<{ type: string; text: string }> = ({ type, text }) => {
   if (!text) return null;
   const color =
     type === "success"
-      ? "bg-green-600/20 text-green-300 border-green-600"
-      : "bg-red-600/20 text-red-300 border-red-600";
+      ? "bg-chart-2/10 text-chart-2 border-chart-2/60"
+      : "bg-destructive/10 text-destructive border-destructive/60";
   return (
     <div className={`p-4 rounded-lg border flex items-center gap-3 ${color}`}>
       {type === "error" && <AlertTriangle className="w-5 h-5" />}
@@ -151,29 +151,29 @@ export default function ProfileEditPage() {
 
   if (authLoading || loading)
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-indigo-400">
+      <div className="min-h-screen flex items-center justify-center text-primary">
         <Loader2 className="w-8 h-8 animate-spin mr-2" /> Loading Profile...
       </div>
     );
 
   if (!userId)
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950 p-8">
+      <div className="min-h-screen flex items-center justify-center p-8">
         <Message type="error" text="Session expired or user not logged in." />
       </div>
     );
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white px-4 sm:px-6 lg:px-10 py-10">
-      <div className="max-w-3xl mx-auto space-y-8 p-6 sm:p-8 lg:p-10 bg-slate-900 border border-indigo-900 rounded-3xl shadow-2xl shadow-indigo-900/20">
+    <div className="min-h-screen text-foreground px-4 sm:px-6 lg:px-10 py-10">
+      <div className="panel max-w-3xl mx-auto space-y-8 p-6 sm:p-8 lg:p-10">
         {/* Header */}
-        <header className="pb-4 border-b border-indigo-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-          <h1 className="text-2xl sm:text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-teal-400 to-indigo-400 flex items-center gap-3">
+        <header className="pb-4 border-b border-border flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <h1 className="text-2xl sm:text-3xl font-bold text-primary flex items-center gap-3">
             <User className="w-6 h-6 sm:w-7 sm:h-7" /> Edit Your Profile
           </h1>
          <button
       onClick={() => router.back()}
-      className="text-indigo-400 hover:text-blue-800 cursor-pointer transition flex items-center gap-1 text-sm"
+      className="text-primary hover:text-primary/80 cursor-pointer transition flex items-center gap-1 text-sm"
     >
       <ArrowLeft className="w-4 h-4" /> Back To Dashboard
     </button>
@@ -193,9 +193,9 @@ export default function ProfileEditPage() {
         </section>
 
         {/* Contact Info */}
-        <section className="space-y-4 pt-4 border-t border-indigo-900">
-          <h2 className="text-xl font-semibold text-indigo-300 flex items-center gap-2">
-            <Mail className="w-5 h-5 text-teal-400" /> Contact & Location
+        <section className="space-y-4 pt-4 border-t border-border">
+          <h2 className="text-xl font-semibold text-primary flex items-center gap-2">
+            <Mail className="w-5 h-5 text-chart-2" /> Contact & Location
           </h2>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 sm:gap-6">
