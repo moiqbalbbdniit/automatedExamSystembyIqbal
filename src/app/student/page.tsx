@@ -1,5 +1,10 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import NextLink from "next/link";
+import axios from "axios";
+import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/lib/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,77 +13,49 @@ import {
   BarChart2,
   Calendar,
   FileText,
-  Clock,
   CheckCircle,
+  User,
+  Settings,
+  Bell,
+  Sparkles,
+  AlertTriangle,
+  Timer,
 } from "lucide-react";
-import { useState, useMemo, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useAuth } from "@/lib/hooks/useAuth";
-import axios from "axios";
 
-const Link = ({
-  href,
-  children,
-  className,
-}: {
-  href: string;
-  children: React.ReactNode;
-  className?: string;
-}) => (
-  <a href={href} className={className}>
-    {children}
-  </a>
-);
-
-// --- DATA TYPES ---
-type Question = { Q_ID?: string; question?: string; options?: string[] };
-type QuestionPaper = {
-  MCQs?: Question[];
-  Theory?: Question[];
-  Coding?: Question[];
-};
-type Subject = {
-  name?: string;
-  code?: string;
-};
+type Subject = { name?: string; code?: string };
+type Section = { _id?: string; name?: string; code?: string };
+type Course = { _id?: string; name?: string };
 type Exam = {
   _id: string;
   title?: string;
   subject?: Subject | null;
+  course?: Course | null;
+  targetSections?: Section[];
   duration?: number;
   date?: string;
-  questions?: QuestionPaper | null;
+  questions?: { MCQs?: Array<unknown>; Theory?: Array<unknown>; Coding?: Array<unknown> } | null;
   isPublished?: boolean;
   publishedAt?: string;
+  expiresAt?: string;
 };
-type EvaluationDetail = {
-  question_id?: string;
-  question_type?: string;
-  evaluation?: Record<string, any>;
-  error?: string;
-};
-type Result = {
-  _id: string;
-  subject?: Subject | null;
-  student_id?: string;
-  total_score?: number;
-  max_score?: number;
-  evaluation_details?: EvaluationDetail[];
-};
+
 type SubmissionStats = {
   totalSubmissions: number;
   lastExam: { subjectName?: string } | null;
   averageScore: string;
 };
 
+type ExamStatusMeta = {
+  label: string;
+  badgeClass: string;
+  cardClass: string;
+};
+
 export default function StudentDashboard() {
   const { user } = useAuth();
+  const studentId = user?.id ? String(user.id) : "";
+
   const [availableExams, setAvailableExams] = useState<Exam[]>([]);
-  const [pastResults, setPastResults] = useState<Result[]>([]);
-  const [activeExam, setActiveExam] = useState<Exam | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [message, setMessage] = useState<string | null>(null);
   const [submittedExams, setSubmittedExams] = useState<Set<string>>(new Set());
   const [stats, setStats] = useState<SubmissionStats>({
     totalSubmissions: 0,
@@ -86,102 +63,112 @@ export default function StudentDashboard() {
     averageScore: "0",
   });
 
-  // --- Fetch Submission Stats ---
-  const fetchSubmissionStats = async () => {
-    if (!user?.id) return;
-    try {
-      const { data } = await axios.get(`/api/submissions/stats?studentId=${user.id}`);
-      setStats({
-        totalSubmissions: data?.totalSubmissions ?? 0,
-        lastExam: data?.lastExam ?? null,
-        averageScore: data?.averageScore ?? "0",
-      });
-    } catch (err) {
-      console.error("Failed to fetch submission stats:", err);
-    }
-  };
-
-  // --- Reload page when tab becomes active ---
-useEffect(() => {
-  const handleVisibilityChange = () => {
-    if (document.visibilityState === "visible") {
-      console.log("🔄 Tab is active again — reloading dashboard...");
-      window.location.reload();
-    }
-  };
-
-  document.addEventListener("visibilitychange", handleVisibilityChange);
-  return () => {
-    document.removeEventListener("visibilitychange", handleVisibilityChange);
-  };
-}, []);
-
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (user?.id) fetchSubmissionStats();
-  }, [user]);
+    if (!studentId) return;
 
-  const { totalSubmissions, lastExam, averageScore } = stats;
+    const fetchSubmissionStats = async () => {
+      try {
+        const { data } = await axios.get(`/api/submissions/stats?studentId=${studentId}`);
+        setStats({
+          totalSubmissions: data?.totalSubmissions ?? 0,
+          lastExam: data?.lastExam ?? null,
+          averageScore: data?.averageScore ?? "0",
+        });
+      } catch (err) {
+        console.error("Failed to fetch submission stats:", err);
+      }
+    };
 
-  // --- Fetch submitted exams ---
+    fetchSubmissionStats();
+  }, [studentId]);
+
   useEffect(() => {
-    if (!user?.id) return;
+    if (!studentId) return;
+
     const fetchSubmittedExams = async () => {
       try {
-        const res = await axios.get(`/api/submit-exam/check?studentId=${user.id}`);
+        const res = await axios.get(`/api/submit-exam/check?studentId=${studentId}`);
         const submittedIds: Set<string> = new Set(
-          (res.data?.submissions || []).map((s: any) => String(s.examId))
+          (res.data?.submissions || []).map((s: { examId: string }) => String(s.examId))
         );
         setSubmittedExams(submittedIds);
       } catch (err) {
         console.error("Failed to fetch submitted exams", err);
       }
     };
+
     fetchSubmittedExams();
-  }, [user]);
+  }, [studentId]);
 
-  // --- Fetch available exams ---
   useEffect(() => {
-  // Stop early if user or course is not ready
-  if (!user?.id) return;
+    if (!studentId) return;
 
-  const courseId = user?.course?._id;
-  if (!courseId) return; // <-- ensures it's defined before using it
+    const courseId = user?.course?._id;
+    if (!courseId) return;
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const examsResponse = await axios.get(`/api/exams?courseId=${courseId}`);
-      const publishedExams = (examsResponse.data || []).filter(
-        (exam: Exam) => exam?.isPublished
-      );
-      setAvailableExams(publishedExams);
-    } catch (err) {
-      console.error("Failed to fetch dashboard data", err);
-      setError("Failed to load dashboard data.");
-    } finally {
-      setLoading(false);
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const sectionId = user?.section?._id;
+        const examUrl = sectionId
+          ? `/api/exams?courseId=${courseId}&sectionId=${sectionId}`
+          : `/api/exams?courseId=${courseId}`;
+
+        const examsResponse = await axios.get(examUrl);
+        const publishedExams = (examsResponse.data || []).filter((exam: Exam) => exam?.isPublished);
+        setAvailableExams(publishedExams);
+      } catch (err) {
+        console.error("Failed to fetch dashboard data", err);
+        setError("Failed to load dashboard data.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+  }, [studentId, user?.course?._id, user?.section?._id]);
+
+  const getExamStatusMeta = (exam: Exam): ExamStatusMeta => {
+    const isSubmitted = submittedExams.has(exam._id);
+    const expiryTs = exam.expiresAt ? new Date(exam.expiresAt).getTime() : null;
+    const now = Date.now();
+    const sixHours = 6 * 60 * 60 * 1000;
+
+    if (isSubmitted) {
+      return {
+        label: "Submitted",
+        badgeClass: "border border-chart-2/40 bg-chart-2/15 text-chart-2",
+        cardClass: "border-chart-2/30",
+      };
     }
+
+    if (expiryTs && expiryTs <= now) {
+      return {
+        label: "Expired",
+        badgeClass: "border border-amber-500/50 bg-amber-500/15 text-amber-700",
+        cardClass: "border-amber-500/35",
+      };
+    }
+
+    if (expiryTs && expiryTs - now <= sixHours) {
+      return {
+        label: "Expiring Soon",
+        badgeClass: "border border-destructive/40 bg-destructive/10 text-destructive",
+        cardClass: "border-destructive/30",
+      };
+    }
+
+    return {
+      label: "Live",
+      badgeClass: "border border-primary/35 bg-primary/12 text-primary",
+      cardClass: "border-border",
+    };
   };
 
-  fetchData();
-}, [user?.id, user?.course?._id]);
-
-
-  // --- Derived Data ---
-  const averageMarksData = useMemo(
-    () =>
-      (pastResults || []).map((res) => ({
-        subject: res.subject?.name || "Exam",
-        marks:
-          (res.max_score ?? 0) > 0
-            ? ((res.total_score ?? 0) / (res.max_score ?? 1)) * 100
-            : 0,
-      })),
-    [pastResults]
-  );
-
-  // --- Message Toast ---
   const MessageToast = () => (
     <AnimatePresence>
       {message && (
@@ -189,182 +176,181 @@ useEffect(() => {
           initial={{ opacity: 0, y: 50, scale: 0.3 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 20, scale: 0.5 }}
-          className="fixed bottom-5 left-1/2 -translate-x-1/2 p-4 bg-gray-800 text-white rounded-lg shadow-xl z-50 flex items-center gap-3"
+          className="fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 items-center gap-3 rounded-lg border border-border bg-popover p-4 text-popover-foreground shadow-xl"
         >
-          <CheckCircle className="text-green-400 w-6 h-6" />
+          <CheckCircle className="h-6 w-6 text-green-400" />
           <span>{message}</span>
-          <Button
-            onClick={() => setMessage(null)}
-            variant="ghost"
-            className="p-1 h-auto text-gray-400 hover:text-white"
-          >
-            ×
+          <Button onClick={() => setMessage(null)} variant="ghost" className="h-auto p-1 text-muted-foreground hover:text-foreground">
+            x
           </Button>
         </motion.div>
       )}
     </AnimatePresence>
   );
 
-  // --- Loading/Error Handling ---
-  if (loading)
+  if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center text-foreground">
         <p>Loading dashboard...</p>
-        <p className="text-sm text-muted-foreground mt-2">
-          If no data appears, please log in again.
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground">If no data appears, please log in again.</p>
       </div>
     );
+  }
 
-  if (error)
+  if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center text-destructive">
         <p>Error: {error}</p>
       </div>
     );
+  }
 
-  // --- Main Dashboard ---
-  if (!activeExam) {
-    return (
-      <div className="min-h-screen aurora-page text-foreground font-sans p-6 sm:p-10">
-        <MessageToast />
-        <div className="max-w-7xl mx-auto space-y-12">
-          {/* Header */}
-          <header className="panel p-8 rounded-3xl flex flex-col sm:flex-row items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 rounded-full bg-muted/60 flex items-center justify-center shadow-inner">
-                <span className="text-3xl font-bold text-primary">
-                  {user?.firstName?.[0] ?? ""}
-                  {user?.lastName?.[0] ?? ""}
-                </span>
-              </div>
+  const { totalSubmissions, lastExam, averageScore } = stats;
+
+  return (
+    <div className="min-h-screen aurora-page p-4 text-foreground sm:p-6">
+      <MessageToast />
+      <div className="mx-auto grid max-w-7xl grid-cols-1 gap-6 lg:grid-cols-[280px_1fr]">
+        <aside className="panel h-fit rounded-2xl p-5 shadow-xl lg:sticky lg:top-6">
+          <div className="mb-6 border-b border-border/70 pb-4">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Student Workspace</p>
+            <h2 className="mt-2 text-2xl font-bold">{user?.firstName || "Student"}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {user?.course?.name || "No class"} - {user?.section ? `${user.section.name} (${user.section.code})` : "No section"}
+            </p>
+          </div>
+
+          <nav className="space-y-2">
+            <a href="#student-exams" className="flex items-center gap-2 rounded-lg border border-border/60 bg-card/70 px-3 py-2 text-sm hover:bg-accent/20">
+              <BookOpen className="h-4 w-4" /> My Exams
+            </a>
+            <NextLink href={studentId ? `/student/results/${studentId}` : "#"} className="flex items-center gap-2 rounded-lg border border-border/60 bg-card/70 px-3 py-2 text-sm hover:bg-accent/20">
+              <FileText className="h-4 w-4" /> Results
+            </NextLink>
+            <NextLink href={studentId ? `/student/analytics/${studentId}` : "#"} className="flex items-center gap-2 rounded-lg border border-border/60 bg-card/70 px-3 py-2 text-sm hover:bg-accent/20">
+              <BarChart2 className="h-4 w-4" /> Analytics
+            </NextLink>
+            <NextLink href="/profile" className="flex items-center gap-2 rounded-lg border border-border/60 bg-card/70 px-3 py-2 text-sm hover:bg-accent/20">
+              <User className="h-4 w-4" /> Profile
+            </NextLink>
+            <NextLink href="/settings" className="flex items-center gap-2 rounded-lg border border-border/60 bg-card/70 px-3 py-2 text-sm hover:bg-accent/20">
+              <Settings className="h-4 w-4" /> Settings
+            </NextLink>
+            <NextLink href="/notifications" className="flex items-center gap-2 rounded-lg border border-border/60 bg-card/70 px-3 py-2 text-sm hover:bg-accent/20">
+              <Bell className="h-4 w-4" /> Notifications
+            </NextLink>
+          </nav>
+
+          <div className="mt-6 rounded-xl border border-border/70 bg-card/70 p-3">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Personal Summary</p>
+            <p className="mt-2 text-sm text-muted-foreground">Completed: <span className="font-semibold text-foreground">{totalSubmissions}</span></p>
+            <p className="text-sm text-muted-foreground">Average: <span className="font-semibold text-foreground">{averageScore}%</span></p>
+            <p className="text-sm text-muted-foreground">Last Subject: <span className="font-semibold text-foreground">{lastExam?.subjectName || "None"}</span></p>
+          </div>
+        </aside>
+
+        <main className="space-y-6">
+          <header className="panel rounded-2xl p-6 shadow-xl">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <h1 className="text-3xl font-bold">
-                  Welcome, {user?.firstName ?? "Student"}
-                </h1>
-                <h4>Course Name: {user?.course?.name ?? "N/A"}</h4>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Ready for your next challenge?
-                </p>
+                <h1 className="text-3xl font-bold">Student Dashboard</h1>
+                <p className="mt-1 text-muted-foreground">Your exam center, progress insights, and personal academic workspace.</p>
               </div>
-            </div>
-
-            <div className="mt-4 sm:mt-0 flex gap-3">
-              <Link href={`/student/results/${user?.id}`}>
-                <Button className="bg-primary text-primary-foreground hover:bg-primary/85 font-semibold transition-transform duration-200 transform hover:scale-105 rounded-full px-6 py-3 shadow">
-                  View Results
-                </Button>
-              </Link>
-              <Link href={`/student/analytics/${user?.id}`}>
-                <Button variant="outline" className="border-border bg-card/70 text-foreground hover:bg-accent/20 font-semibold transition-transform duration-200 transform hover:scale-105 rounded-full px-6 py-3 shadow">
-                  View Analytics
-                </Button>
-              </Link>
+              <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/70 px-3 py-1.5 text-xs text-muted-foreground">
+                <Sparkles className="h-3.5 w-3.5 text-primary" /> Smart Exam Feed Active
+              </div>
             </div>
           </header>
 
-          {/* Stats */}
-          <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <StatCard
-              icon={<BookOpen className="w-6 h-6 text-primary" />}
-              title="Exams Available"
-              value={availableExams.length}
-              color="text-teal-600"
-            />
-            <StatCard
-              icon={<BarChart2 className="w-6 h-6 text-green-500" />}
-              title="Average Score"
-              value={`${averageScore}%`}
-              color="text-green-600"
-            />
-            <StatCard
-              icon={<FileText className="w-6 h-6 text-yellow-500" />}
-              title="Exams Completed"
-              value={totalSubmissions}
-              color="text-yellow-600"
-            />
-            <StatCard
-              icon={<Calendar className="w-6 h-6 text-blue-500" />}
-              title="Last Exam"
-              value={lastExam?.subjectName ?? "None"}
-              color="text-blue-600"
-            />
+          <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <StatCard icon={<BookOpen className="h-6 w-6 text-primary" />} title="Exams Available" value={availableExams.length} color="text-primary" />
+            <StatCard icon={<BarChart2 className="h-6 w-6 text-chart-2" />} title="Average Score" value={`${averageScore}%`} color="text-chart-2" />
+            <StatCard icon={<FileText className="h-6 w-6 text-accent" />} title="Exams Completed" value={totalSubmissions} color="text-accent" />
+            <StatCard icon={<Calendar className="h-6 w-6 text-amber-600" />} title="Last Exam" value={lastExam?.subjectName ?? "None"} color="text-amber-600" />
           </section>
 
-          {/* Upcoming Exams */}
-          <section>
-            <h2 className="text-3xl font-bold text-primary mb-6">
-              Upcoming Exams
-            </h2>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {availableExams.map((exam) => {
-                const isSubmitted = submittedExams.has(exam._id);
-                const hasQuestions =
-                  (exam.questions?.MCQs?.length ?? 0) > 0 ||
-                  (exam.questions?.Theory?.length ?? 0) > 0 ||
-                  (exam.questions?.Coding?.length ?? 0) > 0;
+          <section id="student-exams" className="panel rounded-2xl p-6 shadow-md">
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="text-2xl font-semibold">Assigned Exams</h2>
+              <span className="text-sm text-muted-foreground">Only class-section matched exams are shown</span>
+            </div>
 
-                const displayDate =
-                  exam.publishedAt || exam.date
+            {availableExams.length === 0 ? (
+              <div className="rounded-xl border border-border/70 bg-card/60 p-6 text-sm text-muted-foreground">No active exams available right now.</div>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {availableExams.map((exam) => {
+                  const status = getExamStatusMeta(exam);
+                  const isSubmitted = submittedExams.has(exam._id);
+                  const hasQuestions =
+                    (exam.questions?.MCQs?.length ?? 0) > 0 ||
+                    (exam.questions?.Theory?.length ?? 0) > 0 ||
+                    (exam.questions?.Coding?.length ?? 0) > 0;
+                  const isExpired = status.label === "Expired";
+                  const displayPublished = exam.publishedAt || exam.date
                     ? new Date(exam.publishedAt ?? exam.date!).toLocaleDateString()
                     : "N/A";
+                  const displayExpiry = exam.expiresAt ? new Date(exam.expiresAt).toLocaleString() : "No auto-expiry";
 
-                return (
-                  <Card
-                    key={exam._id}
-                    className="rounded-2xl shadow-lg p-6 bg-card/75 border border-border flex flex-col justify-between backdrop-blur-sm"
-                  >
-                    <CardHeader className="p-0">
-                      <CardTitle className="text-2xl font-semibold text-primary flex items-center gap-3">
-                        <BookOpen className="w-7 h-7" />{" "}
-                        {exam.subject?.name || "Untitled Subject"}
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent className="p-0 mt-4 flex-grow space-y-2 text-foreground">
-                      <div className="flex items-center gap-2">
-                        <FileText className="w-4 h-4" />
-                        <span>Duration: {exam.duration ?? "N/A"} Minutes</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4" />
-                        <span>Published: {displayDate}</span>
-                      </div>
-                    </CardContent>
+                  return (
+                    <Card key={exam._id} className={`rounded-2xl border ${status.cardClass} bg-card/75 p-5 shadow-sm`}>
+                      <CardHeader className="p-0">
+                        <div className="flex items-start justify-between gap-2">
+                          <CardTitle className="text-lg font-semibold text-primary">{exam.title || "Untitled Exam"}</CardTitle>
+                          <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${status.badgeClass}`}>{status.label}</span>
+                        </div>
+                      </CardHeader>
 
-                    {isSubmitted ? (
-                      <div className="w-full mt-6 flex items-center justify-center gap-2 py-3 bg-chart-2 text-background rounded-3xl font-semibold shadow-lg">
-                        <CheckCircle className="w-5 h-5" /> Already Submitted
+                      <CardContent className="mt-4 space-y-2 p-0 text-sm">
+                        <p className="font-medium text-foreground">{exam.subject?.name || "Untitled Subject"}</p>
+                        <p className="text-muted-foreground">Class: {exam.course?.name || "N/A"}</p>
+                        <p className="text-muted-foreground">
+                          Sections: {Array.isArray(exam.targetSections) && exam.targetSections.length > 0
+                            ? exam.targetSections.map((section) => `${section.name || "Section"} (${section.code || "-"})`).join(", ")
+                            : "All sections"}
+                        </p>
+                        <p className="text-muted-foreground">Duration: {exam.duration ?? "N/A"} min</p>
+                        <p className="text-muted-foreground">Published: {displayPublished}</p>
+                        <p className="text-muted-foreground">Expires: {displayExpiry}</p>
+                      </CardContent>
+
+                      <div className="mt-5 flex items-center gap-2">
+                        {isSubmitted ? (
+                          <div className="inline-flex items-center gap-2 rounded-full bg-chart-2 px-4 py-2 text-sm font-semibold text-background">
+                            <CheckCircle className="h-4 w-4" /> Already Submitted
+                          </div>
+                        ) : isExpired ? (
+                          <div className="inline-flex items-center gap-2 rounded-full border border-amber-500/40 bg-amber-500/10 px-4 py-2 text-sm font-semibold text-amber-700">
+                            <AlertTriangle className="h-4 w-4" /> Exam Expired
+                          </div>
+                        ) : hasQuestions ? (
+                          <Button
+                            onClick={() => {
+                              if (user?.id) sessionStorage.setItem("temp_exam_student_id", user.id);
+                              window.open(`/student/exam/${exam._id}`, "_blank");
+                            }}
+                            className="inline-flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-primary-foreground hover:bg-primary/85"
+                          >
+                            <UploadCloud className="h-4 w-4" /> Start Exam
+                          </Button>
+                        ) : (
+                          <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-card px-4 py-2 text-sm text-muted-foreground">
+                            <Timer className="h-4 w-4" /> Questions not ready
+                          </div>
+                        )}
                       </div>
-                    ) : hasQuestions ? (
-                      <Button
-                        onClick={() => {
-                          if (user?.id)
-                            sessionStorage.setItem("temp_exam_student_id", user.id);
-                          window.open(`/student/exam/${exam._id}`, "_blank");
-                        }}
-                        className="w-full mt-6 flex items-center justify-center gap-2 py-3 bg-primary hover:bg-primary/85 text-primary-foreground rounded-3xl"
-                      >
-                        <UploadCloud className="w-5 h-5" /> Start Exam
-                      </Button>
-                    ) : (
-                      <div className="w-full mt-6 text-center text-muted-foreground text-sm">
-                        Questions not yet available.
-                      </div>
-                    )}
-                  </Card>
-                );
-              })}
-            </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
           </section>
-        </div>
+        </main>
       </div>
-    );
-  }
-
-  return null;
+    </div>
+  );
 }
 
-// Small reusable stat card
 function StatCard({
   icon,
   title,
@@ -377,17 +363,17 @@ function StatCard({
   color: string;
 }) {
   return (
-    <Card className="panel rounded-2xl p-6 backdrop-blur-sm">
+    <Card className="panel rounded-2xl p-5">
       <CardHeader className="p-0 pb-3">
-        <CardTitle className="text-xl font-semibold text-foreground flex items-center space-x-2">
-          <span className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border/70 bg-card/80">
+        <CardTitle className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+          <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-border/70 bg-card/80">
             {icon}
           </span>
-          <span>{title}</span>
+          {title}
         </CardTitle>
       </CardHeader>
       <CardContent className="p-0">
-        <div className={`text-3xl font-black ${color} mt-2`}>{value}</div>
+        <div className={`text-3xl font-black ${color}`}>{value}</div>
       </CardContent>
     </Card>
   );

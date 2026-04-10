@@ -7,13 +7,28 @@ interface Course {
   name: string;
 }
 
+interface Section {
+  _id: string;
+  name: string;
+  code: string;
+}
+
 interface User {
   id: string;
   email: string;
   role: string;
   firstName?: string;
   lastName?: string;
+  fullName?: string;
   course?: Course | null;
+  section?: Section | null;
+  className?: string | null;
+  sectionCode?: string | null;
+  phone?: string | null;
+  address?: string | null;
+  zipCode?: string | null;
+  country?: string | null;
+  language?: string | null;
 }
 
 interface AuthContextType {

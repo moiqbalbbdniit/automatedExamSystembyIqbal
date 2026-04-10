@@ -132,15 +132,15 @@ export default function AddFacultyPage() {
             {faculties.map((f, idx) => (
               <tr
                 key={f._id}
-                className={`border-t border-gray-800 ${
-                  idx % 2 === 0 ? "bg-gray-950" : "bg-gray-900"
+                className={`border-t border-border ${
+                  idx % 2 === 0 ? "bg-card/75" : "bg-card/55"
                 }`}
               >
-                <td className="py-3 px-4 font-medium text-gray-100">
+                <td className="py-3 px-4 font-medium text-foreground">
                   {f.name}
                 </td>
-                <td className="py-3 px-4 text-gray-300">{f.email}</td>
-                <td className="py-3 px-4 text-gray-300">{f.department}</td>
+                <td className="py-3 px-4 text-muted-foreground">{f.email}</td>
+                <td className="py-3 px-4 text-muted-foreground">{f.department}</td>
                 <td className="py-3 px-4 text-right">
                   <button
                     className="text-red-500 hover:text-red-400 transition"

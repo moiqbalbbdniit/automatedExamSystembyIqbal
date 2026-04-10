@@ -272,7 +272,7 @@ const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
 
             <Select value={reviewFacultyId} onValueChange={setReviewFacultyId}>
               <SelectTrigger className="bg-background border-border">
-                <SelectValue placeholder="Assign Faculty"  className="text-white"/>
+                <SelectValue placeholder="Assign Faculty" className="text-foreground" />
               </SelectTrigger>
               <SelectContent className="bg-popover border-border text-popover-foreground">
                 {faculties.map(f => (

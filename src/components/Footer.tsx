@@ -1,8 +1,17 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { Copyright, ExternalLink, Heart, ShieldCheck } from "lucide-react";
+import { usePathname } from "next/navigation";
 
 export default function Footer() {
+  const pathname = usePathname();
+
+  if (pathname?.startsWith("/student/exam/")) {
+    return null;
+  }
+
   return (
     <footer className="border-t border-border/70 bg-card/65 backdrop-blur-xl">
       <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">

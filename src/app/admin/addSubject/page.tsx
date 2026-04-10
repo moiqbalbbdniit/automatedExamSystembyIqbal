@@ -222,15 +222,15 @@ export default function AddSubjectPage() {
               <tr
                 key={s._id}
                 className={`${
-                  idx % 2 === 0 ? "bg-gray-950" : "bg-gray-900"
-                } hover:bg-gray-800 transition`}
+                  idx % 2 === 0 ? "bg-card/75" : "bg-card/55"
+                } transition hover:bg-accent/15`}
               >
-                <td className="py-3 px-4 text-gray-300">{s.code}</td>
-                <td className="py-3 px-4 font-medium text-gray-100">{s.name}</td>
-                <td className="py-3 px-4 text-gray-300">
+                <td className="py-3 px-4 text-muted-foreground">{s.code}</td>
+                <td className="py-3 px-4 font-medium text-foreground">{s.name}</td>
+                <td className="py-3 px-4 text-muted-foreground">
                   {s.topics?.length ? s.topics.join(", ") : "—"}
                 </td>
-                <td className="py-3 px-4 text-gray-300">{s.faculty?.name || "—"}</td>
+                <td className="py-3 px-4 text-muted-foreground">{s.faculty?.name || "—"}</td>
                 <td className="py-3 px-4 text-right">
                   <button
                     className="text-red-500 hover:text-red-400 transition"
@@ -243,7 +243,7 @@ export default function AddSubjectPage() {
             ))}
             {filteredSubjects.length === 0 && (
               <tr>
-                <td colSpan={5} className="py-4 text-center text-gray-500">
+                <td colSpan={5} className="py-4 text-center text-muted-foreground">
                   No subjects found.
                 </td>
               </tr>

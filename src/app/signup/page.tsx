@@ -14,7 +14,9 @@ const SignupPage = () => {
   const [role, setRole] = useState("student");
   const [loading, setLoading] = useState(false);
   const [courses, setCourses] = useState<{ _id: string; name: string }[]>([]);
+  const [sections, setSections] = useState<{ _id: string; name: string; code: string }[]>([]);
   const [selectedCourse, setSelectedCourse] = useState("");
+  const [selectedSection, setSelectedSection] = useState("");
   const router = useRouter();
 
   // Fetch available courses
@@ -26,6 +28,28 @@ const SignupPage = () => {
         .catch((err) => console.error("Error loading courses:", err));
     }
   }, [role]);
+
+  useEffect(() => {
+    if (role !== "student" && role !== "faculty") {
+      setSections([]);
+      setSelectedSection("");
+      return;
+    }
+
+    if (!selectedCourse) {
+      setSections([]);
+      setSelectedSection("");
+      return;
+    }
+
+    fetch(`/api/sections?courseId=${selectedCourse}`)
+      .then((res) => res.json())
+      .then((data) => setSections(Array.isArray(data?.sections) ? data.sections : []))
+      .catch((err) => {
+        console.error("Error loading sections:", err);
+        setSections([]);
+      });
+  }, [role, selectedCourse]);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,6 +67,7 @@ const SignupPage = () => {
           password,
           role,
           course: selectedCourse || null,
+          section: selectedSection || null,
         }),
       });
 
@@ -104,7 +129,11 @@ const SignupPage = () => {
             {roles.map((r) => (
               <button
                 key={r}
-                onClick={() => setRole(r)}
+                onClick={() => {
+                  setRole(r);
+                  setSelectedCourse("");
+                  setSelectedSection("");
+                }}
                 type="button"
                 className={`w-1/3 rounded-full py-2 text-xs font-semibold capitalize transition-all duration-300 sm:text-sm ${
                   role === r
@@ -216,7 +245,10 @@ const SignupPage = () => {
               <select
                 id="course"
                 value={selectedCourse}
-                onChange={(e) => setSelectedCourse(e.target.value)}
+                onChange={(e) => {
+                  setSelectedCourse(e.target.value);
+                  setSelectedSection("");
+                }}
                 required
                 className="w-full rounded-xl border border-input bg-background/70 px-4 py-3 text-foreground"
               >
@@ -224,6 +256,29 @@ const SignupPage = () => {
                 {courses.map((course) => (
                   <option key={course._id} value={course._id}>
                     {course.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+          {(role === "student" || role === "faculty") && (
+            <div>
+              <label htmlFor="section" className="mb-1 block text-sm font-medium text-muted-foreground">
+                Select Section
+              </label>
+              <select
+                id="section"
+                value={selectedSection}
+                onChange={(e) => setSelectedSection(e.target.value)}
+                required
+                disabled={!selectedCourse}
+                className="w-full rounded-xl border border-input bg-background/70 px-4 py-3 text-foreground disabled:opacity-60"
+              >
+                <option value="">-- Choose a Section --</option>
+                {sections.map((section) => (
+                  <option key={section._id} value={section._id}>
+                    {section.name} ({section.code})
                   </option>
                 ))}
               </select>

@@ -25,6 +25,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useAuth } from "@/lib/hooks/useAuth";
 
 type EvaluationDetail = {
   questionText: string;
@@ -49,14 +50,31 @@ type Submission = {
 };
 
 export default function StudentResultsPage() {
+  const { user, loading: authLoading } = useAuth();
   const params = useParams();
-  const studentId = params?.id;
+  const studentId = Array.isArray(params?.id) ? params.id[0] : params?.id;
   const router = useRouter();
 
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const toArray = <T,>(data: unknown, key?: string): T[] => {
+    if (Array.isArray(data)) return data as T[];
+    if (key && data && typeof data === "object") {
+      const maybe = (data as Record<string, unknown>)[key];
+      if (Array.isArray(maybe)) return maybe as T[];
+    }
+    return [];
+  };
+
   useEffect(() => {
+    if (authLoading) return;
+
+    if (user?.role === "student" && user?.id && studentId && String(user.id) !== String(studentId)) {
+      router.replace("/student");
+      return;
+    }
+
     if (!studentId) {
       console.error("Missing studentId in route or query params!");
       setLoading(false);
@@ -68,8 +86,9 @@ export default function StudentResultsPage() {
       try {
         const res = await axios.get(`/api/results?studentId=${studentId}`);
         const data = res.data;
+        const safeResults = toArray<any>(data, "results");
 
-        const formatted: Submission[] = (data || []).map((result: any) => {
+        const formatted: Submission[] = safeResults.map((result: any) => {
           const exam = result.examId || {};
           const subjectName = exam.subject?.name || "Unknown Subject";
           return {
@@ -80,14 +99,14 @@ export default function StudentResultsPage() {
             totalMarks: result.totalMaxMarks || 100,
             percentage: result.percentage || 0,
             feedback: result.feedback || "No feedback available",
-            strengths: result.strengths || [],
-            weaknesses: result.weaknesses || [],
+            strengths: toArray<string>(result.strengths),
+            weaknesses: toArray<string>(result.weaknesses),
             durationInMinutes: exam.duration || 0,
             status:
               result.totalMarksObtained != null
                 ? "evaluated"
                 : "pending_evaluation",
-            evaluationDetails: result.evaluationDetails?.map((q: any) => ({
+            evaluationDetails: toArray<any>(result.evaluationDetails).map((q: any) => ({
               questionText: q.questionText,
               scoreObtained: q.scoreObtained,
               maximumScore: q.maximumScore,
@@ -106,11 +125,13 @@ export default function StudentResultsPage() {
     };
 
     fetchResults();
-  }, [studentId]);
+  }, [studentId, authLoading, user, router]);
 
   const handleBack = () => (window.location.href = "/student");
 
-  const groupedBySubject = submissions.reduce(
+  const safeSubmissions = Array.isArray(submissions) ? submissions : [];
+
+  const groupedBySubject = safeSubmissions.reduce(
     (acc: Record<string, Submission[]>, sub) => {
       const subjectKey = sub.subject || "Unknown";
       if (!acc[subjectKey]) acc[subjectKey] = [];
@@ -137,7 +158,7 @@ export default function StudentResultsPage() {
             >
               <ChevronLeft className="w-5 h-5" /> Back to Dashboard
             </Button>
-            {!loading && submissions.length > 0 && (
+            {!loading && safeSubmissions.length > 0 && (
               <Button
                 onClick={() => router.push(`/student/analytics/${studentId}`)}
                 className="flex items-center gap-2 bg-accent/20 hover:bg-accent/30 text-foreground rounded-full px-4 py-2 transition-all"
@@ -162,7 +183,7 @@ export default function StudentResultsPage() {
         )}
 
         {/* No submissions */}
-        {!loading && submissions.length === 0 && (
+        {!loading && safeSubmissions.length === 0 && (
           <div className="text-center py-20 text-muted-foreground text-lg">
             No submissions found. Try completing an exam first.
           </div>
@@ -241,34 +262,34 @@ export default function StudentResultsPage() {
                             </DialogTrigger>
 
                             {/* Modal Content */}
-                            <DialogContent className="max-w-4xl w-[90vw] sm:w-[80vw] lg:w-[60vw] max-h-[90vh] overflow-y-auto rounded-3xl p-6 bg-gray-900 shadow-xl border border-blue-800">
+                            <DialogContent className="max-w-4xl w-[90vw] sm:w-[80vw] lg:w-[60vw] max-h-[90vh] overflow-y-auto rounded-3xl border border-border bg-popover p-6 text-popover-foreground shadow-xl">
                               <DialogHeader>
-                                <DialogTitle className="text-2xl font-bold text-white">
+                                <DialogTitle className="text-2xl font-bold text-foreground">
                                   {sub.examTitle} - Detailed Report
                                 </DialogTitle>
                               </DialogHeader>
 
                               <div className="space-y-6 mt-4">
                                 {/* Summary Section */}
-                                <div className="bg-gradient-to-r from-blue-900 via-gray-800 to-blue-900 p-5 rounded-2xl border border-blue-700 shadow-lg">
-                                  <p className="text-lg text-blue-300 font-semibold mb-2">
+                                <div className="rounded-2xl border border-border bg-card p-5 shadow-lg">
+                                  <p className="mb-2 text-lg font-semibold text-primary">
                                     Overall Performance Summary
                                   </p>
-                                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-gray-200">
+                                  <div className="grid grid-cols-1 gap-4 text-foreground sm:grid-cols-3">
                                     <p>
-                                      <span className="font-semibold text-blue-400">
+                                      <span className="font-semibold text-primary">
                                         Marks Obtained:
                                       </span>{" "}
                                       {sub.marksObtained}/{sub.totalMarks}
                                     </p>
                                     <p>
-                                      <span className="font-semibold text-blue-400">
+                                      <span className="font-semibold text-primary">
                                         Percentage:
                                       </span>{" "}
                                       {percentage.toFixed(2)}%
                                     </p>
                                     <p>
-                                      <span className="font-semibold text-blue-400">
+                                      <span className="font-semibold text-primary">
                                         Feedback:
                                       </span>{" "}
                                       {sub.feedback}
@@ -282,7 +303,7 @@ export default function StudentResultsPage() {
                                     <h3 className="text-xl font-semibold text-green-400 flex items-center gap-2 mb-3">
                                       <Star className="w-5 h-5" /> Strengths
                                     </h3>
-                                    <ul className="list-disc list-inside text-gray-200 space-y-1">
+                                    <ul className="list-inside list-disc space-y-1 text-muted-foreground">
                                       {sub.strengths.map((s, i) => (
                                         <li key={i}>{s}</li>
                                       ))}
@@ -296,7 +317,7 @@ export default function StudentResultsPage() {
                                     <h3 className="text-xl font-semibold text-red-400 flex items-center gap-2 mb-3">
                                       <AlertTriangle className="w-5 h-5" /> Weaknesses
                                     </h3>
-                                    <ul className="list-disc list-inside text-gray-300 space-y-1">
+                                    <ul className="list-inside list-disc space-y-1 text-muted-foreground">
                                       {sub.weaknesses.map((w, i) => (
                                         <li key={i}>{w}</li>
                                       ))}
@@ -306,7 +327,7 @@ export default function StudentResultsPage() {
                               </div>
 
                               <DialogClose asChild>
-                                <Button className="mt-6 w-full bg-gray-700 hover:bg-gray-600 text-white rounded-xl">
+                                <Button className="mt-6 w-full rounded-xl bg-secondary text-secondary-foreground hover:bg-secondary/80">
                                   Close
                                 </Button>
                               </DialogClose>

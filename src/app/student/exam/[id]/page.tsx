@@ -413,6 +413,14 @@ export default function ExamTaker() {
     ];
   }, [exam]);
 
+  const answeredCount = useMemo(() => {
+    return answers.filter((a) => String(a.studentAnswer || "").trim().length > 0).length;
+  }, [answers]);
+
+  const progressPercent = allQuestions.length > 0
+    ? Math.round((answeredCount / allQuestions.length) * 100)
+    : 0;
+
   // --- UI Rendering ---
   if (loading)
     return <div className="min-h-screen flex items-center justify-center text-muted-foreground text-lg">Loading Exam...</div>;
@@ -423,28 +431,21 @@ export default function ExamTaker() {
   return (
     <>
 
-    {showInstructions && (
+    {showInstructions && exam?.proctoringEnabled && (
       <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 text-foreground p-6">
         <div className="panel rounded-2xl p-8 max-w-lg text-center space-y-6 shadow-2xl">
           <h2 className="text-2xl font-bold text-primary">Exam Instructions</h2>
-          <ul className="text-left text-muted-foreground list-disc list-inside space-y-2">
-
-            <ul className="list-disc pl-5 mb-2 text-lg space-y-1 text-foreground text-xs sm:text-sm leading-relaxed">
-              <li>Keep your camera and microphone on throughout the exam - moving out of the frame may trigger a warning or auto-submit.</li>
-              <li>Switching tabs or minimizing the window more than twice will result in automatic submission.</li>
-              <li>Do not reload, copy, or navigate away from the exam window.</li>
-              <li>Maintain eye contact with the screen — frequent looking away will be flagged.</li>
-              <li>Ensure proper lighting and a quiet environment for clear detection.</li>
-              <li>Submit your answers before time ends — system auto-submits when the timer expires.</li>
-              <li>Leaving fullscreen mode may pause monitoring and lead to auto-submission.</li>
-              <li>Any external assistance or use of devices is strictly prohibited.</li>
-            </ul>
-
+          <ul className="list-disc pl-5 text-left text-xs sm:text-sm leading-relaxed space-y-1 text-foreground">
+            <li>Keep your camera on throughout the exam.</li>
+            <li>Switching tabs more than twice will auto-submit the exam.</li>
+            <li>Do not reload, copy, or navigate away from the exam window.</li>
+            <li>Maintain fullscreen mode to avoid violation flags.</li>
+            <li>Submit before timer ends to avoid forced submission.</li>
           </ul>
           <Button
             onClick={() => {
               setShowInstructions(false);
-              setIsProctoringStarted(true); // 👈 Add this new state trigger
+              setIsProctoringStarted(true);
             }}
             className="bg-primary hover:bg-primary/85 text-primary-foreground font-bold px-6 py-3 rounded-full"
           >
@@ -458,23 +459,17 @@ export default function ExamTaker() {
       <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50 text-foreground p-6">
         <div className="panel rounded-2xl p-8 max-w-lg text-center space-y-6 shadow-2xl">
           <h2 className="text-2xl font-bold text-primary">Exam Instructions</h2>
-          <ul className="text-left text-muted-foreground list-disc list-inside space-y-2">
-            <ul className="list-disc pl-5 mb-2 text-lg space-y-1 text-foreground text-xs sm:text-sm leading-relaxed">
-
-              <li>Switching tabs or minimizing the window more than twice will result in automatic submission.</li>
-              <li>Do not reload, copy, or navigate away from the exam window.</li>
-              <li>Maintain eye contact with the screen — frequent looking away will be flagged.</li>
-              <li>Submit your answers before time ends — system auto-submits when the timer expires.</li>
-              <li>Leaving fullscreen mode may pause monitoring and lead to auto-submission.</li>
-              <li>Any external assistance or use of devices is strictly prohibited.</li>
-            </ul>
-
+          <ul className="list-disc pl-5 text-left text-xs sm:text-sm leading-relaxed space-y-1 text-foreground">
+            <li>Switching tabs more than twice will auto-submit the exam.</li>
+            <li>Do not reload, copy, or navigate away from the exam window.</li>
+            <li>Maintain fullscreen mode to avoid violation flags.</li>
+            <li>Submit your answers before timer ends.</li>
+            <li>External help and device usage are prohibited.</li>
           </ul>
           <Button
             onClick={() => {
               setShowInstructions(false);
-
-              setIsProctoringStarted(true); // Triggers the non-proctoring exam flow
+              setIsProctoringStarted(true);
             }}
             className="bg-primary hover:bg-primary/85 text-primary-foreground font-bold px-6 py-3 rounded-full"
           >
@@ -486,25 +481,46 @@ export default function ExamTaker() {
 
       <div className="min-h-screen aurora-page text-foreground font-sans p-6 sm:p-10">
         <div className="max-w-5xl mx-auto space-y-6">
-          <header className="panel flex flex-col sm:flex-row items-center justify-between p-6 rounded-3xl shadow-2xl">
-            <Button
-              onClick={() => handleExamSubmission(false)}
-              disabled={submitting}
-              className="flex items-center gap-2 font-semibold rounded-full bg-destructive border border-destructive/70 hover:bg-destructive/85 text-destructive-foreground shadow-xl px-5 py-3 order-3 sm:order-1 mt-4 sm:mt-0"
-            >
-              {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
-              {submitting ? "Submitting..." : "Finish Exam"}
-            </Button>
-
-            <div className="text-center flex-1 mt-4 sm:mt-0 order-1 sm:order-2">
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-primary drop-shadow-md">
-                {exam.subject?.name} Exam
-              </h1>
+          <header className="panel rounded-3xl p-6 shadow-2xl">
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-primary">{exam.subject?.name} Exam</h1>
+                <p className="mt-1 text-sm text-muted-foreground">Answer all questions carefully. Timer is strict.</p>
+              </div>
+              <div className="flex items-center gap-2 text-destructive font-bold bg-destructive/10 border border-destructive/40 px-5 py-2 rounded-full shadow-md">
+                <Clock className="w-5 h-5" />
+                <span className="text-destructive">{formatTime(timeLeft)}</span>
+              </div>
             </div>
 
-            <div className="flex items-center space-x-2 text-destructive font-bold bg-destructive/10 border border-destructive/40 px-5 py-2 rounded-full shadow-md mt-4 sm:mt-0 order-2 sm:order-3">
-              <Clock className="w-5 h-5" />
-              <span className="text-destructive">{formatTime(timeLeft)}</span>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <div className="rounded-xl border border-border/70 bg-card/70 px-3 py-2 text-sm">
+                <p className="text-muted-foreground">Questions</p>
+                <p className="font-semibold">{allQuestions.length}</p>
+              </div>
+              <div className="rounded-xl border border-border/70 bg-card/70 px-3 py-2 text-sm">
+                <p className="text-muted-foreground">Answered</p>
+                <p className="font-semibold">{answeredCount}</p>
+              </div>
+              <div className="rounded-xl border border-border/70 bg-card/70 px-3 py-2 text-sm">
+                <p className="text-muted-foreground">Progress</p>
+                <p className="font-semibold">{progressPercent}%</p>
+              </div>
+            </div>
+
+            <div className="mt-3 h-2 w-full rounded-full bg-muted">
+              <div className="h-2 rounded-full bg-primary" style={{ width: `${progressPercent}%` }} />
+            </div>
+
+            <div className="mt-4">
+              <Button
+                onClick={() => handleExamSubmission(false)}
+                disabled={submitting}
+                className="flex items-center gap-2 font-semibold rounded-full bg-destructive border border-destructive/70 hover:bg-destructive/85 text-destructive-foreground shadow-xl px-5 py-3"
+              >
+                {submitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <UploadCloud className="w-4 h-4" />}
+                {submitting ? "Submitting..." : "Finish Exam"}
+              </Button>
             </div>
           </header>
 

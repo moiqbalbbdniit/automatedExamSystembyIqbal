@@ -1,0 +1,23 @@
+import { NextRequest, NextResponse } from "next/server";
+import { authorizeApiRoles } from "@/lib/apiAuth";
+import { connectDB } from "@/lib/db";
+import FacultySubjectAssignment from "@/lib/models/FacultySubjectAssignment";
+
+export async function DELETE(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const auth = authorizeApiRoles(req, ["admin"]);
+  if (!auth.ok) return auth.response;
+
+  await connectDB();
+
+  const { id } = await params;
+  const deleted = await FacultySubjectAssignment.findByIdAndDelete(id);
+
+  if (!deleted) {
+    return NextResponse.json({ error: "Assignment not found" }, { status: 404 });
+  }
+
+  return NextResponse.json({ success: true });
+}

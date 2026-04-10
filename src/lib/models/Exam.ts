@@ -28,7 +28,14 @@ const ExamSchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Course", 
     },
+    targetSections: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Section",
+      },
+    ],
     subject: { type: Schema.Types.ObjectId, ref: "Subject", required: true },
+    facultyUserId: { type: Schema.Types.ObjectId, ref: "User", required: false },
     facultyId: { type: String, required: true }, // Matches frontend useAuth hook
     duration: { type: Number, default: 180 }, // FIX: Name is 'duration'
     veryShort: { count: Number, difficulty: String },
@@ -38,13 +45,14 @@ const ExamSchema = new Schema(
     instructions: { type: String },
     status: {
       type: String,
-      enum: ["draft", "generated", "published"],
+      enum: ["draft", "generated", "published", "stopped", "expired"],
       default: "draft",
     },
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     isPublished: { type: Boolean, default: false },
 
     publishedAt: { type: Date, required: false },
+    expiresAt: { type: Date, required: false },
         proctoringEnabled: { type: Boolean, default: false },
 
 

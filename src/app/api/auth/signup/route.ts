@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
 import User from "@/lib/models/User";
 import Course from "@/lib/models/Course"; // ✅ make sure Course model exists
+import Section from "@/lib/models/Section";
 import { connectDB } from "@/lib/db";
 
 
@@ -10,7 +11,7 @@ export async function POST(req: Request) {
   try {
     await connectDB();
     const body = await req.json();
-    const { firstName, lastName, email, password, role, course } = body;
+    const { firstName, lastName, email, password, role, course, section } = body;
 
     // Validate fields
     if (!firstName || !email || !password || !role) {
@@ -23,6 +24,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "User already exists" }, { status: 400 });
     }
 
+    const needsClassSection = role === "student" || role === "faculty";
+    if (needsClassSection && (!course || !section)) {
+      return NextResponse.json(
+        { error: "Class and section are required for student/faculty" },
+        { status: 400 }
+      );
+    }
+
     // If a course is provided, validate it exists
     let courseId = null;
     if (course) {
@@ -31,6 +40,21 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: "Invalid course selected" }, { status: 400 });
       }
       courseId = existingCourse._id;
+    }
+
+    let sectionId = null;
+    if (section) {
+      const existingSection = await Section.findById(section);
+      if (!existingSection) {
+        return NextResponse.json({ error: "Invalid section selected" }, { status: 400 });
+      }
+      if (courseId && String(existingSection.course) !== String(courseId)) {
+        return NextResponse.json(
+          { error: "Selected section does not belong to selected class" },
+          { status: 400 }
+        );
+      }
+      sectionId = existingSection._id;
     }
 
     // Hash password
@@ -45,6 +69,7 @@ export async function POST(req: Request) {
       password: hashedPassword,
       role,
       course: courseId || undefined,
+      section: sectionId || undefined,
     });
 
     return NextResponse.json({
@@ -55,6 +80,7 @@ export async function POST(req: Request) {
         email: newUser.email,
         role: newUser.role,
         course: newUser.course,
+        section: newUser.section,
       },
     });
   } catch (err: any) {

@@ -3,13 +3,17 @@
 import StatsCard from "@/components/admin/StatsCard";
 import UsersTable from "@/components/admin/UsersTable";
 import ExamMonitor from "@/components/admin/ExamMonitor";
-import Link from "next/link";import { useEffect, useState } from "react";
-import { BarChart3 } from "lucide-react"; // optional icon
+import Sidebar from "@/components/admin/Sidebar";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { BarChart3, Loader2 } from "lucide-react";
+import { Skeleton } from "@/components/ui/skeleton";
 
 
 
 
 export default function AdminPage() {
+  const [statsLoading, setStatsLoading] = useState(true);
   const [stats, setStats] = useState({
     totalStudents: 0,
     totalActiveExams: 0,
@@ -19,12 +23,15 @@ export default function AdminPage() {
 
   useEffect(() => {
     const fetchStats = async () => {
+      setStatsLoading(true);
       try {
         const res = await fetch("/api/admin/stats");
         const data = await res.json();
         setStats(data);
       } catch (err) {
         console.error("Failed to load admin stats:", err);
+      } finally {
+        setStatsLoading(false);
       }
     };
     fetchStats();
@@ -33,134 +40,128 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen aurora-page text-foreground">
-      <div className="flex flex-col p-4 sm:p-6 md:p-8">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
-          <div>
-            <h1 className="text-xl sm:text-3xl font-semibold text-primary">
-              Admin Dashboard
-            </h1>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-              Comprehensive system oversight and management
-            </p>
-          </div>
+      <div className="mx-auto flex w-full max-w-[1500px] gap-4 px-2 py-3 sm:px-3 sm:py-4 lg:px-4">
+        <Sidebar />
 
-          {/* Action Menu */}
-          <div className="grid w-full sm:w-auto grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
-            <Link
-              href="/admin/question-bank"
-              className="text-center px-2 sm:px-4 py-2 bg-primary text-primary-foreground rounded-md shadow hover:bg-primary/85 text-xs sm:text-sm font-medium"
-            >
-              Question Bank
-            </Link>
-            <Link
-              href="/admin/addFaculty"
-              className="text-center px-2 sm:px-4 py-2 border border-border bg-card/75 text-foreground rounded-md hover:bg-accent/20 text-xs sm:text-sm"
-            >
-              Add Faculty
-            </Link>
-            <Link
-              href="/admin/addSubject"
-              className="text-center px-2 sm:px-4 py-2 border border-border bg-card/75 text-foreground rounded-md hover:bg-accent/20 text-xs sm:text-sm"
-            >
-              Add Subject
-            </Link>
-            <Link
-              href="/admin/addDepartment"
-              className="text-center px-2 sm:px-4 py-2 border border-border bg-card/75 text-foreground rounded-md hover:bg-accent/20 text-xs sm:text-sm"
-            >
-              Add Department
-            </Link>
-            <Link
-              href="/admin/addCourses"
-              className="text-center px-2 sm:px-4 py-2 border border-border bg-card/75 text-foreground rounded-md hover:bg-accent/20 text-xs sm:text-sm"
-            >
-              Add Course
-            </Link>
-            <Link
-              href="/admin/notifications"
-              className="text-center px-2 sm:px-4 py-2 border border-border bg-card/75 text-foreground rounded-md hover:bg-accent/20 text-xs sm:text-sm"
-            >
-              Post Notification
-            </Link>
-          </div>
-        </div>
+        <div className="min-w-0 flex-1 space-y-6">
+          <section className="grid grid-cols-2 gap-2 sm:grid-cols-4 lg:hidden">
+            <Link href="/admin" className="rounded-lg border border-border/70 bg-card/80 px-3 py-2 text-center text-sm font-medium hover:bg-accent/20">Dashboard</Link>
+            <Link href="/admin/question-bank" className="rounded-lg border border-border/70 bg-card/80 px-3 py-2 text-center text-sm font-medium hover:bg-accent/20">Question Bank</Link>
+            <Link href="/admin/class-sections" className="rounded-lg border border-border/70 bg-card/80 px-3 py-2 text-center text-sm font-medium hover:bg-accent/20">Class Sections</Link>
+            <Link href="/admin/analytics" className="rounded-lg border border-border/70 bg-card/80 px-3 py-2 text-center text-sm font-medium hover:bg-accent/20">Analytics</Link>
+          </section>
 
-        {/* KPI Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 sm:gap-6 mb-8">
-          <StatsCard
-            title="Total Student"
-            value={stats.totalStudents.toString()}
-            subtitle="Active students"
-            // trend="+12.5%"
-            icon="users"
-          />
-          <StatsCard
-            title="Active Exams"
-            value={stats.totalActiveExams.toString()}
-            subtitle="Currently running examinations"
-            // trend="+3%"
-            icon="file"
-          />
-          <StatsCard
-            title="Unevaluated Exams"
-            value={stats.totalUnevaluatedExams.toString()}
-            subtitle="Pending evaluation"
-            // trend="+2.1%"
-            icon="pulse"
-          />
-          <StatsCard
-            title="Submissions"
-            value={stats.totalSubmissions.toString()}
-            subtitle="All submitted exams"
-            icon="file"
-          />
-          {/* <StatsCard
-            title="Unevaluated Exams"
-            value={stats.totalUnevaluatedExams.toString()}
-            subtitle="Pending evaluation"
-            icon="pulse"
-          />
-          <StatsCard
-            title="Total Submissions"
-            value={stats.totalSubmissions.toString()}
-            subtitle="All submitted exams"
-            icon="database"
-          /> */}
-
-          {/* New "Show Analytics" Card */}
-          <Link href="/admin/analytics" className="lg:col-span-1">
-            <div className="panel hover:bg-accent/20 text-foreground flex flex-col justify-center items-center text-center p-8 transition-all duration-300 cursor-pointer">
-              <BarChart3 className="w-8 h-8 mb-3" />
-              <h3 className="text-lg font-semibold">View Analytics</h3>
-              <p className="text-sm opacity-90">Detailed insights & trends</p>
+          <header className="panel rounded-2xl p-5 sm:p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h1 className="text-2xl font-semibold text-primary sm:text-3xl">Admin Dashboard</h1>
+                <p className="mt-1 text-sm text-muted-foreground">Comprehensive system oversight and management</p>
+              </div>
+              <div className="flex items-center gap-2 rounded-full border border-border/70 bg-background/70 px-3 py-1.5 text-xs text-muted-foreground">
+                {statsLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <span className="h-2 w-2 rounded-full bg-chart-2" />}
+                {statsLoading ? "Refreshing metrics" : "System metrics updated"}
+              </div>
             </div>
-          </Link>
-        </div>
+          </header>
 
-        {/* User Management + Exam Monitor */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-3 space-y-6">
-            <div className="panel rounded-lg p-4 sm:p-6 overflow-x-auto">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-4 gap-3">
-                <div>
-                  <h2 className="text-lg font-medium text-primary">
-                    User Management
-                  </h2>
-                  <p className="text-sm text-muted-foreground">
-                    Manage faculty and student accounts
-                  </p>
-                </div>
+          <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+            {statsLoading ? (
+              <>
+                <KpiSkeleton />
+                <KpiSkeleton />
+                <KpiSkeleton />
+                <KpiSkeleton />
+                <KpiSkeleton />
+              </>
+            ) : (
+              <>
+                <StatsCard title="Total Student" value={stats.totalStudents.toString()} subtitle="Active students" icon="users" />
+                <StatsCard title="Active Exams" value={stats.totalActiveExams.toString()} subtitle="Currently running examinations" icon="file" />
+                <StatsCard title="Unevaluated Exams" value={stats.totalUnevaluatedExams.toString()} subtitle="Pending evaluation" icon="pulse" />
+                <StatsCard title="Submissions" value={stats.totalSubmissions.toString()} subtitle="All submitted exams" icon="file" />
+                <Link href="/admin/analytics" className="panel flex cursor-pointer flex-col items-center justify-center rounded-2xl p-6 text-center transition-colors duration-200 hover:bg-accent/15">
+                  <BarChart3 className="mb-3 h-8 w-8" />
+                  <h3 className="text-lg font-semibold">View Analytics</h3>
+                  <p className="text-sm text-muted-foreground">Detailed insights and trends</p>
+                </Link>
+              </>
+            )}
+          </section>
+
+          <section className="grid gap-4 lg:grid-cols-2">
+            <div className="panel rounded-2xl p-5">
+              <h3 className="text-base font-semibold text-primary">Quick Actions</h3>
+              <p className="mt-1 text-sm text-muted-foreground">Jump directly to your most-used admin tasks.</p>
+              <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                <ActionLink href="/admin/addFaculty" label="Add Faculty" />
+                <ActionLink href="/admin/addSubject" label="Add Subject" />
+                <ActionLink href="/admin/addDepartment" label="Department" />
+                <ActionLink href="/admin/addCourses" label="Courses" />
+                <ActionLink href="/admin/class-sections" label="Class Sections" />
+                <ActionLink href="/admin/question-bank" label="Question Bank" />
+              </div>
+            </div>
+
+            <div className="panel rounded-2xl p-5">
+              <h3 className="text-base font-semibold text-primary">Operational Checklist</h3>
+              <p className="mt-1 text-sm text-muted-foreground">Live status without charts for day-to-day monitoring.</p>
+              <ul className="mt-4 space-y-3">
+                <li className="flex items-center justify-between rounded-lg border border-border/70 bg-background/70 px-3 py-2">
+                  <span className="text-sm text-foreground">Pending Evaluations</span>
+                  <span className="rounded-full bg-accent px-2.5 py-0.5 text-xs font-semibold text-accent-foreground">
+                    {stats.totalUnevaluatedExams}
+                  </span>
+                </li>
+                <li className="flex items-center justify-between rounded-lg border border-border/70 bg-background/70 px-3 py-2">
+                  <span className="text-sm text-foreground">Active Exam Sessions</span>
+                  <span className="rounded-full bg-chart-2/20 px-2.5 py-0.5 text-xs font-semibold text-chart-2">
+                    {stats.totalActiveExams}
+                  </span>
+                </li>
+                <li className="flex items-center justify-between rounded-lg border border-border/70 bg-background/70 px-3 py-2">
+                  <span className="text-sm text-foreground">Total Submissions Tracked</span>
+                  <span className="rounded-full bg-primary/15 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                    {stats.totalSubmissions}
+                  </span>
+                </li>
+              </ul>
+            </div>
+          </section>
+
+          <section className="space-y-6">
+            <div className="panel rounded-2xl p-4 sm:p-6">
+              <div className="mb-4">
+                <h2 className="text-lg font-medium text-primary">User Management</h2>
+                <p className="text-sm text-muted-foreground">Manage faculty and student accounts</p>
               </div>
               <UsersTable />
             </div>
 
             <ExamMonitor />
-          </div>
-
-          {/* Removed ChartsPanel (moved to /admin/analytics) */}
+          </section>
         </div>
       </div>
     </div>
+  );
+}
+
+function KpiSkeleton() {
+  return (
+    <div className="panel rounded-2xl p-5">
+      <Skeleton className="h-3.5 w-28" />
+      <Skeleton className="mt-3 h-10 w-14" />
+      <Skeleton className="mt-3 h-3.5 w-32" />
+    </div>
+  );
+}
+
+function ActionLink({ href, label }: { href: string; label: string }) {
+  return (
+    <Link
+      href={href}
+      className="rounded-lg border border-border/70 bg-background/75 px-3 py-2 text-center text-sm font-medium text-foreground transition-colors hover:bg-accent/15"
+    >
+      {label}
+    </Link>
   );
 }

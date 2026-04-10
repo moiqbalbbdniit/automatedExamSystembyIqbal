@@ -1,8 +1,11 @@
+import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import User from "@/lib/models/User";
 import Course from "@/lib/models/Course";
+import Section from "@/lib/models/Section";
 import bcrypt from "bcryptjs";
 import * as XLSX from "xlsx";
+import { authorizeApiRoles } from "@/lib/apiAuth";
 
 interface ExcelRow {
   firstName?: string;
@@ -11,16 +14,28 @@ interface ExcelRow {
   password?: string;
   role?: string;
   courseName?: string;
+  sectionCode?: string;
 }
 
-export async function POST(req: Request) {
+type BulkSummary = {
+  created: number;
+  updated: number;
+  skipped: number;
+};
+
+const normalizeText = (value: unknown) => String(value ?? "").trim();
+
+export async function POST(req: NextRequest) {
   try {
+    const auth = authorizeApiRoles(req, ["admin", "faculty"]);
+    if (!auth.ok) return auth.response;
+
     await connectDB();
 
     const formData = await req.formData();
     const file = formData.get("file") as File;
     if (!file) {
-      return new Response(JSON.stringify({ error: "No file uploaded" }), {
+      return NextResponse.json({ error: "No file uploaded" }, {
         status: 400,
       });
     }
@@ -28,76 +43,147 @@ export async function POST(req: Request) {
     const buffer = Buffer.from(await file.arrayBuffer());
     const workbook = XLSX.read(buffer, { type: "buffer" });
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json<ExcelRow>(sheet);
+    const rows = XLSX.utils.sheet_to_json<ExcelRow>(sheet, { defval: "" });
 
-    console.log(`📄 Loaded ${rows.length} rows from Excel`);
+    if (!rows.length) {
+      return NextResponse.json({ error: "No rows found in uploaded file" }, { status: 400 });
+    }
 
-    let created = 0,
-      updated = 0,
-      skipped = 0;
+    const emails = Array.from(
+      new Set(
+        rows
+          .map((row) => normalizeText(row.email).toLowerCase())
+          .filter((email) => email.length > 0)
+      )
+    );
+
+    const existingUsers = emails.length
+      ? await User.find({ email: { $in: emails } }, { _id: 1, email: 1, role: 1 }).lean()
+      : [];
+    const existingByEmail = new Map(existingUsers.map((u: any) => [String(u.email).toLowerCase(), u]));
+
+    const uniqueCourseNames = Array.from(
+      new Set(rows.map((row) => normalizeText(row.courseName).toLowerCase()).filter(Boolean))
+    );
+
+    const courseDocs = uniqueCourseNames.length
+      ? await Course.find({
+          name: {
+            $in: uniqueCourseNames.map(
+              (name) => new RegExp(`^${name.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, "i")
+            ),
+          },
+        }).lean()
+      : [];
+
+    const courseByName = new Map<string, any>();
+    for (const course of courseDocs as any[]) {
+      courseByName.set(String(course.name || "").trim().toLowerCase(), course);
+    }
+
+    const sectionDocs = courseDocs.length
+      ? await Section.find({ course: { $in: (courseDocs as any[]).map((course) => course._id) } }).lean()
+      : [];
+
+    const sectionByCourseAndCode = new Map<string, any>();
+    for (const section of sectionDocs as any[]) {
+      const key = `${String(section.course)}|${String(section.code || "").trim().toUpperCase()}`;
+      sectionByCourseAndCode.set(key, section);
+    }
+
+    const summary: BulkSummary = { created: 0, updated: 0, skipped: 0 };
+    const defaultHashedPassword = await bcrypt.hash("123456", 10);
+    const operations: any[] = [];
 
     for (const row of rows) {
-      const email = row.email?.trim()?.toLowerCase();
-      const firstName = row.firstName?.trim() || "";
-      const lastName = row.lastName?.trim() || "";
-      const password = row.password?.trim() || "123456";
-      const role = row.role?.trim()?.toLowerCase() || "student";
-      const courseName = row.courseName?.trim();
+      const email = normalizeText(row.email).toLowerCase();
+      const firstName = normalizeText(row.firstName);
+      const lastName = normalizeText(row.lastName);
+      const password = normalizeText(row.password);
+      const requestedRole = normalizeText(row.role).toLowerCase() || "student";
+      const role = auth.user.role === "faculty" ? "student" : requestedRole;
+      const courseName = normalizeText(row.courseName).toLowerCase();
+      const sectionCode = normalizeText(row.sectionCode).toUpperCase();
 
       if (!email || !firstName || !lastName) {
-        skipped++;
+        summary.skipped += 1;
         continue;
       }
 
-      const hashed = await bcrypt.hash(password, 10);
-
-      // ✅ Find course by courseName field
-      let courseDoc = null;
-      if (courseName) {
-        courseDoc = await Course.findOne({
-          name: new RegExp(`^${courseName}$`, "i"),
-        });
-        if (!courseDoc) {
-          console.warn(`⚠️ Course not found for "${courseName}"`);
-        }
+      if (!["admin", "faculty", "student"].includes(role)) {
+        summary.skipped += 1;
+        continue;
       }
 
-      const userData: any = {
+      if (auth.user.role === "faculty" && role !== "student") {
+        summary.skipped += 1;
+        continue;
+      }
+
+      const existing = existingByEmail.get(email);
+      const courseDoc = courseName ? courseByName.get(courseName) : null;
+      const sectionDoc =
+        courseDoc && sectionCode
+          ? sectionByCourseAndCode.get(`${String(courseDoc._id)}|${sectionCode}`)
+          : null;
+
+      const requiresClassSection = role === "student" || role === "faculty";
+      if (requiresClassSection && (!courseDoc || !sectionDoc)) {
+        summary.skipped += 1;
+        continue;
+      }
+
+      const userData: Record<string, unknown> = {
         firstName,
         lastName,
         email,
-        password: hashed,
         role,
-        createdAt: new Date(),
       };
 
-      // ✅ Attach course ObjectId if found
       if (courseDoc?._id) {
         userData.course = courseDoc._id;
       }
 
-      const existing = await User.findOne({ email });
+      if (sectionDoc?._id) {
+        userData.section = sectionDoc._id;
+      }
+
       if (existing) {
-        await User.updateOne({ email }, { $set: userData });
-        updated++;
+        if (password) {
+          userData.password = await bcrypt.hash(password, 10);
+        }
+        operations.push({
+          updateOne: {
+            filter: { _id: existing._id },
+            update: { $set: userData },
+          },
+        });
+        summary.updated += 1;
       } else {
-        await User.create(userData);
-        created++;
+        operations.push({
+          insertOne: {
+            document: {
+              ...userData,
+              password: password ? await bcrypt.hash(password, 10) : defaultHashedPassword,
+              createdAt: new Date(),
+            },
+          },
+        });
+        summary.created += 1;
       }
     }
 
-    console.log("🎯 Bulk Upload Summary:", { created, updated, skipped });
+    if (operations.length > 0) {
+      await User.bulkWrite(operations, { ordered: false });
+    }
 
-    return new Response(
-      JSON.stringify({
-        message: "Bulk user upload completed successfully",
-        summary: { created, updated, skipped },
-      }),
-      { status: 200 }
-    );
+    return NextResponse.json({
+      message: "Bulk user upload completed successfully",
+      summary,
+    });
   } catch (err: any) {
     console.error("❌ Bulk Upload Error:", err);
-    return new Response(JSON.stringify({ error: err.message }), {
+    return NextResponse.json({ error: err.message || "Bulk upload failed" }, {
       status: 500,
     });
   }

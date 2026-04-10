@@ -2,9 +2,7 @@ import { NextResponse } from "next/server";
 import { connectDB } from "@/lib/db";
 import Exam from "@/lib/models/Exam";
 import Submission from "@/lib/models/Submission";
-import Faculty from "@/lib/models/faculty";
 import User from "@/lib/models/User";
-import Subject from "@/lib/models/subject";
 
 
 interface ExamData {
@@ -32,32 +30,47 @@ export async function GET(req: Request) {
     end.setHours(23, 59, 59, 999);
 
     const exams = await Exam.find({ createdAt: { $gte: start, $lte: end } })
-      .populate("subject" , "name code")
+      .populate("subject", "name code")
       .lean();
+
+    const examIds = exams.map((e: any) => e._id);
+    const facultyIds = Array.from(
+      new Set(exams.map((e: any) => String(e.facultyId || "")).filter(Boolean))
+    );
+
+    const [submissions, facultyUsers] = await Promise.all([
+      Submission.find({ examId: { $in: examIds } }, { examId: 1, studentId: 1, isEvaluated: 1 }).lean(),
+      User.find({ _id: { $in: facultyIds } }, { firstName: 1, lastName: 1, email: 1 }).lean(),
+    ]);
+
+    const facultyMap = new Map<string, string>();
+    for (const user of facultyUsers as any[]) {
+      const name = `${user.firstName || ""} ${user.lastName || ""}`.trim() || user.email || "Unknown";
+      facultyMap.set(String(user._id), name);
+    }
+
+    const submissionByExam = new Map<string, any[]>();
+    for (const submission of submissions as any[]) {
+      const examId = String(submission.examId || "");
+      if (!submissionByExam.has(examId)) submissionByExam.set(examId, []);
+      submissionByExam.get(examId)!.push(submission);
+    }
 
     const examData: ExamData[] = await Promise.all(
       exams.map(async (exam) => {
-        console.log("facultyId from exam:", exam.facultyId);
-
-        const user = await User.findById(exam.facultyId).lean();
-        let facultyName = "Unknown";
-
-        if (user && "email" in user) {
-          const faculty = await Faculty.findOne({ email: user.email }).lean() as { name?: string } | null;
-          if (faculty && faculty.name) facultyName = faculty.name;
-        }
-
-        const submissions = await Submission.find({ examId: exam._id }).lean();
-        const uniqueStudents = new Set(submissions.map((s) => s.studentId));
-        const unevaluated = submissions.filter((s) => !s.isEvaluated).length;
+        const examId = (exam._id as string | { toString(): string }).toString();
+        const examSubmissions = submissionByExam.get(examId) || [];
+        const uniqueStudents = new Set(examSubmissions.map((s: any) => String(s.studentId || "")));
+        const unevaluated = examSubmissions.filter((s: any) => !s.isEvaluated).length;
+        const facultyName = facultyMap.get(String((exam as any).facultyId || "")) || "Unknown Faculty";
 
         return {
-          id: (exam._id as string | { toString(): string }).toString(),
+          id: examId,
           title: exam.title,
-          subject: exam.subject?.name || "Unknown",
+          subject: (exam as any).subject?.name || "Unknown Subject",
           faculty: facultyName,
-          createdAt: exam.createdAt,
-          totalSubmissions: submissions.length,
+          createdAt: (exam as any).createdAt,
+          totalSubmissions: examSubmissions.length,
           totalStudents: uniqueStudents.size,
           unevaluated,
         };

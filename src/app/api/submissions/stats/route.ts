@@ -5,9 +5,14 @@ import Exam from "@/lib/models/Exam";
 import Subject from "@/lib/models/subject";
 import ExamResult from "@/lib/models/ExamResult";
 import mongoose from "mongoose";
+import { NextRequest } from "next/server";
+import { authorizeApiRoles } from "@/lib/apiAuth";
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
+    const auth = authorizeApiRoles(req, ["student", "faculty", "admin"]);
+    if (!auth.ok) return auth.response;
+
     await connectDB();
     // Extract studentId from query params
   const url = new URL(req.url);
@@ -27,6 +32,10 @@ export async function GET(req: Request) {
         { status: 400 }
       );
     }
+
+    if (auth.user.role === "student" && studentId !== auth.user.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
     
 
     const totalSubmissions = await Submission.countDocuments({ studentId });
@@ -44,7 +53,6 @@ export async function GET(req: Request) {
     const examResults = await ExamResult.find({ studentId }).lean();
     let avgScore = 0;
     if (examResults.length > 0) {
-        console.log(`Found ${examResults.length} exam results for student ${studentId}.`);
       const totalScore = examResults.reduce(
         (sum, r) => sum + (r.totalMarksObtained || 0),
         0
@@ -54,8 +62,7 @@ export async function GET(req: Request) {
         0
       );
       avgScore = totalMax > 0 ? (totalScore / totalMax) * 100 : 0;
-    }else{
-        console.log("No exam results found for average score calculation.");
+    } else {
     }
 
 

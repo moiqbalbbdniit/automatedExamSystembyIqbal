@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { PlusCircle, BookOpen, Play, Eye, Edit3, CheckCircle2, Clock3, Layers3 } from "lucide-react";
+import { PlusCircle, BookOpen, Play, Eye, Edit3, CheckCircle2, Clock3, Layers3, BarChart3, Upload, UserPlus, Trash2, Square, User, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -27,6 +27,9 @@ import { toast } from "sonner";
 
 type Subject = { _id: string; name: string; code?: string };
 type Course = { _id: string; name: string };
+type Section = { _id: string; name: string; code: string };
+type FacultyAssignment = { _id: string; course?: Course; section?: Section };
+type FacultySubjectAssignment = { _id: string; subject?: Subject };
 
 // This defines the structure of the generated questions object
 type QuestionPaper = {
@@ -40,9 +43,12 @@ type Exam = {
   _id: string;
   title: string;
    course: Course | string; 
+  targetSections?: Array<Section | string>;
   subject: Subject;
   duration: number;
   status: string;
+  isPublished?: boolean;
+  expiresAt?: string;
   questions: QuestionPaper;
   veryShort: { count: number; difficulty: string };
   short: { count: number; difficulty: string };
@@ -61,8 +67,11 @@ export default function FacultyDashboardPage() {
   const { user } = useAuth();
   const facultyId = user?.id;
   const facultyName = user?.firstName;
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [subjects, setSubjects] = useState<Subject[]>([]);
+  const [assignedSections, setAssignedSections] = useState<Section[]>([]);
+  const [loadingAssignedSections, setLoadingAssignedSections] = useState(false);
+  const [assignedSubjects, setAssignedSubjects] = useState<Subject[]>([]);
+  const [assignments, setAssignments] = useState<FacultyAssignment[]>([]);
+  const [loadingAssignments, setLoadingAssignments] = useState(false);
   const [exams, setExams] = useState<Exam[]>([]);
   const [loadingExams, setLoadingExams] = useState(false);
   const [pendingCounts, setPendingCounts] = useState<PendingCountByExam[]>([]);
@@ -71,6 +80,7 @@ export default function FacultyDashboardPage() {
   const [form, setForm] = useState({
     title: "",
     course: "",
+    targetSections: [] as string[],
     subjectId: "",
     duration: 180,
     veryShortCount: 5,
@@ -82,63 +92,100 @@ export default function FacultyDashboardPage() {
     codingCount: 0,
     instructions: "",
     proctoringEnabled: false,
+    expiryPreset: "none" as "none" | "5h" | "1d" | "custom",
+    customExpiryAt: "",
   });
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [examSearch, setExamSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "draft" | "published" | "stopped" | "expired">("all");
 
-  // fetch courses
-  async function fetchCourses() {
-    try {
-      const res = await fetch("/api/courses");
-      const data = await res.json();
-      setCourses(data || []);
-    } catch (err) {
-      console.error("Courses fetch error", err);
+  const normalizeSectionId = (section: Section | string): string => {
+    if (!section) return "";
+    return typeof section === "string" ? section : section._id;
+  };
+
+  const toArray = <T,>(data: unknown, key?: string): T[] => {
+    if (Array.isArray(data)) return data as T[];
+    if (key && data && typeof data === "object") {
+      const maybe = (data as Record<string, unknown>)[key];
+      if (Array.isArray(maybe)) return maybe as T[];
     }
-  }
+    return [];
+  };
+
+  const toDatetimeLocal = (date: Date): string => {
+    const local = new Date(date.getTime() - date.getTimezoneOffset() * 60000);
+    return local.toISOString().slice(0, 16);
+  };
+
+  const getExpiryDateFromForm = (): Date | null => {
+    if (form.expiryPreset === "5h") {
+      const expiry = new Date();
+      expiry.setHours(expiry.getHours() + 5);
+      return expiry;
+    }
+
+    if (form.expiryPreset === "1d") {
+      const expiry = new Date();
+      expiry.setDate(expiry.getDate() + 1);
+      return expiry;
+    }
+
+    if (form.expiryPreset === "custom" && form.customExpiryAt) {
+      const parsed = new Date(form.customExpiryAt);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    }
+
+    return null;
+  };
 
   //fetch pending submissions 
   async function fetchPendingCounts(id: string) {
     try {
       const res = await fetch(`/api/submissions/pending-count?facultyId=${id}`);
+      if (!res.ok) throw new Error(`Pending count API failed: ${res.status}`);
       const data = await res.json();
-    
-      setPendingCounts(data.pendingByExam || []); 
+      setPendingCounts(toArray<PendingCountByExam>(data, "pendingByExam"));
     } catch (err) {
       console.error("Pending counts fetch error", err);
+      setPendingCounts([]);
     }
   }
-
-  useEffect(() => {
-    async function loadInitialData() {
-      await Promise.all([fetchSubjects(), fetchCourses()]);
-      if (facultyId) await loadExams(facultyId);
-    }
-    loadInitialData();
-  }, []);
 
 
    async function loadExams(id: string) {
     setLoadingExams(true);
     try {
       const res = await fetch(`/api/exams?facultyId=${id}`);
+      if (!res.ok) {
+        const errorPayload = await res.json().catch(() => ({}));
+        throw new Error(
+          (errorPayload as { error?: string })?.error || `Exams API failed: ${res.status}`
+        );
+      }
       const data = await res.json();
-      setExams(data || []);
+      setExams(toArray<Exam>(data, "exams"));
       await fetchPendingCounts(id);
     } catch (err) {
       console.error("Failed loading exams", err);
+      setExams([]);
+      setPendingCounts([]);
+      toast.error("Unable to load faculty exams right now.");
     } finally {
       setLoadingExams(false);
     }
   }
 
-
  useEffect(() => {
     async function loadInitialData() {
-      await Promise.all([fetchSubjects(), fetchCourses()]);
       if (facultyId) {
-        await loadExams(facultyId); 
+        await Promise.all([
+          loadExams(facultyId),
+          fetchFacultyAssignments(facultyId),
+          fetchFacultySubjectAssignments(facultyId),
+        ]);
       }
     }
     loadInitialData();
@@ -151,13 +198,50 @@ useEffect(() => {
     fetchPendingCounts(facultyId); 
 }, [facultyId]);
 
-  async function fetchSubjects() {
+  async function fetchFacultySubjectAssignments(id: string) {
     try {
-      const res = await fetch("/api/subject");
-      const data = await res.json();
-      setSubjects(data || []);
+      const [subjectRes, assignmentRes] = await Promise.all([
+        fetch("/api/subject"),
+        fetch(`/api/admin/faculty-subject-assignments?facultyUserId=${id}`),
+      ]);
+
+      if (!subjectRes.ok || !assignmentRes.ok) {
+        throw new Error("Unable to load assigned subjects");
+      }
+
+      const subjectData = await subjectRes.json();
+      const assignmentData = await assignmentRes.json();
+
+      const allSubjects = toArray<Subject>(subjectData, "subjects");
+      const mappedAssignments = toArray<FacultySubjectAssignment>(assignmentData, "assignments");
+      const assignedIds = new Set(
+        mappedAssignments
+          .map((item) => item.subject?._id)
+          .filter((value): value is string => Boolean(value))
+      );
+
+      const filtered = allSubjects.filter((s) => assignedIds.has(s._id));
+      setAssignedSubjects(filtered);
     } catch (err) {
-      console.error("Subjects fetch error", err);
+      console.error("Faculty subject assignments fetch error", err);
+      setAssignedSubjects([]);
+      toast.error("Unable to load assigned subjects.");
+    }
+  }
+
+  async function fetchFacultyAssignments(id: string) {
+    setLoadingAssignments(true);
+    try {
+      const res = await fetch(`/api/admin/faculty-assignments?facultyUserId=${id}`);
+      if (!res.ok) throw new Error(`Assignments API failed: ${res.status}`);
+      const data = await res.json();
+      setAssignments(toArray<FacultyAssignment>(data, "assignments"));
+    } catch (err) {
+      console.error("Faculty assignments fetch error", err);
+      setAssignments([]);
+      toast.error("Unable to load your class-section assignments.");
+    } finally {
+      setLoadingAssignments(false);
     }
   }
 
@@ -172,7 +256,8 @@ useEffect(() => {
     setEditingExam(null);
     setForm({
       title: "",
-      course: "B.Tech",
+      course: "",
+      targetSections: [],
       subjectId: "",
       duration: 180,
       veryShortCount: 5,
@@ -184,6 +269,8 @@ useEffect(() => {
       codingCount: 0,
       instructions: "",
        proctoringEnabled: false,
+      expiryPreset: "none",
+      customExpiryAt: "",
     });
     setOpenModal(true);
   }
@@ -196,6 +283,9 @@ useEffect(() => {
       typeof exam.course === "object"
         ? exam.course?._id
         : exam.course || "",
+      targetSections: Array.isArray(exam.targetSections)
+        ? exam.targetSections.map((section) => normalizeSectionId(section)).filter(Boolean)
+        : [],
       subjectId: exam.subject?._id || "",
       duration: exam.duration || 180,
       veryShortCount: exam.veryShort?.count || 0,
@@ -207,21 +297,62 @@ useEffect(() => {
       codingCount: exam.coding?.count || 0,
       instructions: exam.instructions || "",
       proctoringEnabled: exam.proctoringEnabled ?? false,
+      expiryPreset: exam.expiresAt ? "custom" : "none",
+      customExpiryAt: exam.expiresAt ? toDatetimeLocal(new Date(exam.expiresAt)) : "",
     });
     setOpenModal(true);
   }
 
+  useEffect(() => {
+    const loadAssignedSections = async () => {
+      if (!openModal || !facultyId || !form.course) {
+        setAssignedSections([]);
+        return;
+      }
+
+      setLoadingAssignedSections(true);
+      try {
+        const res = await fetch(
+          `/api/admin/faculty-assignments?facultyUserId=${facultyId}&courseId=${form.course}`
+        );
+        if (!res.ok) throw new Error("Failed to load assigned sections");
+
+        const data = await res.json();
+        const sections = toArray<{ section?: Section }>(data, "assignments")
+          .map((item) => item.section)
+          .filter((item): item is Section => Boolean(item?._id));
+
+        const unique = Array.from(new Map(sections.map((s) => [s._id, s])).values());
+        setAssignedSections(unique);
+      } catch (err) {
+        console.error("Assigned section fetch error", err);
+        setAssignedSections([]);
+      } finally {
+        setLoadingAssignedSections(false);
+      }
+    };
+
+    loadAssignedSections();
+  }, [openModal, facultyId, form.course]);
+
   const handleSaveExam = async () => {
-  if (!form.title || !form.subjectId) {
-    alert("Please provide exam title and select a subject.");
+  if (!form.title || !form.subjectId || !form.course || form.targetSections.length === 0) {
+    toast.error("Please provide exam title, subject, class, and at least one section.");
     return;
   }
 
   setSaving(true);
   try {
+    const expiresAt = getExpiryDateFromForm();
+    if (form.expiryPreset === "custom" && !expiresAt) {
+      toast.error("Please choose a valid custom expiry date and time.");
+      return;
+    }
+
     const payload = {
       title: form.title,
       course: form.course,
+      targetSections: form.targetSections,
       subject: form.subjectId,
       duration: Number(form.duration),
       veryShort: {
@@ -239,7 +370,9 @@ useEffect(() => {
       coding: { count: Math.max(0, Number(form.codingCount)) },
       instructions: form.instructions,
       facultyId,
+      facultyUserId: facultyId,
       proctoringEnabled: form.proctoringEnabled,
+      expiresAt: expiresAt ? expiresAt.toISOString() : null,
     };
 
     const url = editingExam ? `/api/exams/${editingExam._id}` : "/api/exams";
@@ -255,14 +388,16 @@ useEffect(() => {
     if (!res.ok) throw new Error(saved.error || "Failed to save exam");
 
     // ✅ Update local state immediately with new values
-    setExams((prev) =>
-      editingExam
-        ? prev.map((e) => (e._id === saved._id ? saved : e))
-        : [saved, ...prev]
-    );
+    setExams((prev) => {
+      const safePrev = Array.isArray(prev) ? prev : [];
+      return editingExam
+        ? safePrev.map((e) => (e._id === saved._id ? saved : e))
+        : [saved, ...safePrev];
+    });
 
     toast.success("Exam saved successfully!");
     setOpenModal(false);
+    if (facultyId) await loadExams(facultyId);
   } catch (err: any) {
     console.error("Save exam error:", err);
     toast.error(`Failed to save exam: ${err.message}`);
@@ -287,22 +422,22 @@ useEffect(() => {
         method: "POST",
       });
 
-      if (res.status === 200) {
-        toast.success("Paper generated successfully!");
-      } else {
-        const errorData = await res.json();
+      const responseData = await res.json().catch(() => ({}));
+      if (!res.ok) {
         toast.error("Failed to generate paper.");
         throw new Error(
-          errorData.error || "Generation failed with an unknown error"
+          (responseData as { error?: string }).error || "Generation failed with an unknown error"
         );
       }
-      const updated = await res.json();
+
+      toast.success("Paper generated successfully!");
+      const updated = responseData as Exam;
       setExams((prev) =>
-        prev.map((e) => (e._id === updated._id ? updated : e))
+        (Array.isArray(prev) ? prev : []).map((e) => (e._id === updated._id ? updated : e))
       );
     } catch (err: any) {
       console.error("Generation Error:", err);
-      alert(`Failed to generate: ${err.message}`);
+      toast.error(`Failed to generate paper: ${err.message}`);
     } finally {
       setGenerating(null);
       setLoading(false);
@@ -314,6 +449,8 @@ useEffect(() => {
     try {
       const res = await fetch(`/api/exams/${examId}/publish`, {
         method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "publish" }),
       });
       if (!res.ok) {
         const errorData = await res.json();
@@ -321,12 +458,57 @@ useEffect(() => {
       }
       const updated = await res.json();
       setExams((prev) =>
-        prev.map((e) => (e._id === updated._id ? updated : e))
+        (Array.isArray(prev) ? prev : []).map((e) => (e._id === updated._id ? updated : e))
       );
-      alert("Exam published.");
+      toast.success("Exam published successfully.");
     } catch (err: any) {
       console.error("Publish Error:", err);
-      alert(`Publish done: ${err.message}`);
+      toast.error(`Publish failed: ${err.message}`);
+    }
+  };
+
+  const handleStopExam = async (examId: string) => {
+    if (!confirm("Stop this exam now? Students will no longer be able to submit.")) return;
+    try {
+      const res = await fetch(`/api/exams/${examId}/publish`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "stop" }),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Stop failed");
+      }
+      const updated = await res.json();
+      setExams((prev) =>
+        (Array.isArray(prev) ? prev : []).map((e) => (e._id === updated._id ? updated : e))
+      );
+      toast.success("Exam has been stopped.");
+    } catch (err: any) {
+      console.error("Stop Error:", err);
+      toast.error(`Unable to stop exam: ${err.message}`);
+    }
+  };
+
+  const handleQuickExpiry = async (examId: string, hours: 5 | 24) => {
+    try {
+      const res = await fetch(`/api/exams/${examId}/publish`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "publish", expiryHours: hours }),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Expiry update failed");
+      }
+      const updated = await res.json();
+      setExams((prev) =>
+        (Array.isArray(prev) ? prev : []).map((e) => (e._id === updated._id ? updated : e))
+      );
+      toast.success(hours === 5 ? "Expiry set to 5 hours." : "Expiry set to 1 day.");
+    } catch (err: any) {
+      console.error("Quick expiry error:", err);
+      toast.error(`Unable to update expiry: ${err.message}`);
     }
   };
 
@@ -335,11 +517,11 @@ useEffect(() => {
     try {
       const res = await fetch(`/api/exams/${examId}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Delete failed");
-      setExams((prev) => prev.filter((e) => e._id !== examId));
-      alert("Exam deleted.");
+      setExams((prev) => (Array.isArray(prev) ? prev : []).filter((e) => e._id !== examId));
+      toast.success("Exam deleted.");
     } catch (err: any) {
       console.error("Delete Error:", err);
-      alert(`Delete failed: ${err.message}`);
+      toast.error(`Delete failed: ${err.message}`);
     }
   };
 
@@ -396,24 +578,145 @@ useEffect(() => {
     );
   }
 
-  const totalExams = exams.length;
-  const publishedExams = exams.filter((exam) => exam.status === "published").length;
+  const safeExams = Array.isArray(exams) ? exams : [];
+  const totalExams = safeExams.length;
+  const publishedExams = safeExams.filter((exam) => exam.status === "published").length;
   const draftExams = totalExams - publishedExams;
-  const totalPending = pendingCounts.reduce((acc, item) => acc + item.count, 0);
+  const stoppedExams = safeExams.filter((exam) => exam.status === "stopped").length;
+  const totalPending = (Array.isArray(pendingCounts) ? pendingCounts : []).reduce((acc, item) => acc + item.count, 0);
+
+  const uniqueClassMap = new Map<string, string>();
+  const uniqueSectionMap = new Map<string, string>();
+  const classWiseSectionMap = new Map<string, Set<string>>();
+  const assignedCourseOptions: Course[] = [];
+
+  for (const assignment of assignments) {
+    const courseId = assignment.course?._id;
+    const courseName = assignment.course?.name;
+    const sectionId = assignment.section?._id;
+    const sectionLabel = assignment.section
+      ? `${assignment.section.name} (${assignment.section.code})`
+      : "";
+
+    if (courseId && courseName) uniqueClassMap.set(courseId, courseName);
+    if (sectionId && sectionLabel) uniqueSectionMap.set(sectionId, sectionLabel);
+
+    if (courseName && sectionLabel) {
+      if (!classWiseSectionMap.has(courseName)) {
+        classWiseSectionMap.set(courseName, new Set());
+      }
+      classWiseSectionMap.get(courseName)?.add(sectionLabel);
+    }
+  }
+
+  for (const [courseId, courseName] of uniqueClassMap.entries()) {
+    assignedCourseOptions.push({ _id: courseId, name: courseName });
+  }
+
+  const getDisplayStatus = (exam: Exam): "draft" | "published" | "stopped" | "expired" => {
+    const expiresAtTime = exam.expiresAt ? new Date(exam.expiresAt).getTime() : null;
+    const isExpired = exam.status !== "stopped" && Boolean(expiresAtTime && expiresAtTime <= Date.now());
+    if (isExpired) return "expired";
+    if (exam.status === "published") return "published";
+    if (exam.status === "stopped") return "stopped";
+    return "draft";
+  };
+
+  const normalizedSearch = examSearch.trim().toLowerCase();
+  const filteredExams = safeExams.filter((exam) => {
+    const examCourseName = typeof exam.course === "object" ? exam.course?.name : exam.course;
+    const title = String(exam.title || "").toLowerCase();
+    const subject = String(exam.subject?.name || "").toLowerCase();
+    const course = String(examCourseName || "").toLowerCase();
+    const status = getDisplayStatus(exam);
+
+    const matchesSearch =
+      normalizedSearch.length === 0 ||
+      title.includes(normalizedSearch) ||
+      subject.includes(normalizedSearch) ||
+      course.includes(normalizedSearch);
+
+    const matchesStatus = statusFilter === "all" || status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
 
   return (
-    <div className="min-h-screen aurora-page text-foreground p-6">
-      <div className="panel rounded-2xl p-8 shadow-xl mb-8">
-        <h1 className="text-4xl font-bold">Faculty Dashboard</h1>
-        <p className="mt-2 text-muted-foreground">
-          Create and manage question papers for your students.
-        </p>
-        <p className="mt-4 text-lg">
-          Faculty Name: <strong className="text-foreground">{facultyName}</strong>
-        </p>
+    <div className="min-h-screen aurora-page text-foreground p-4 sm:p-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[280px_1fr]">
+        <aside className="panel h-fit rounded-2xl p-5 shadow-xl lg:sticky lg:top-6">
+          <div className="mb-6 border-b border-border/70 pb-4">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Faculty Console</p>
+            <h1 className="mt-2 text-2xl font-bold">{facultyName || "Faculty"}</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Manage exams, sections, results, and student workflows.</p>
+          </div>
+
+          <nav className="space-y-2">
+            <Button onClick={openCreateModal} className="w-full justify-start bg-primary text-primary-foreground hover:bg-primary/85">
+              <PlusCircle className="mr-2 h-4 w-4" /> Create Exam
+            </Button>
+            <Link href="/faculty/analytics" className="block">
+              <Button variant="outline" className="w-full justify-start border-border bg-card hover:bg-accent/20">
+                <BarChart3 className="mr-2 h-4 w-4" /> Analytics
+              </Button>
+            </Link>
+            <Link href="/faculty/bulk/manage" className="block">
+              <Button variant="outline" className="w-full justify-start border-border bg-card hover:bg-accent/20">
+                <UserPlus className="mr-2 h-4 w-4" /> User Creation
+              </Button>
+            </Link>
+            <Link href="/profile" className="block">
+              <Button variant="outline" className="w-full justify-start border-border bg-card hover:bg-accent/20">
+                <User className="mr-2 h-4 w-4" /> Profile
+              </Button>
+            </Link>
+          </nav>
+
+          <div className="mt-6 rounded-xl border border-border/70 bg-card/70 p-3">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">Assignment Snapshot</p>
+            {loadingAssignments ? (
+              <p className="mt-2 text-sm text-muted-foreground">Loading assignments...</p>
+            ) : (
+              <div className="mt-3 grid grid-cols-3 gap-3 text-sm">
+                <div className="rounded-lg border border-border/60 bg-background/60 p-3">
+                  <p className="text-muted-foreground">Classes</p>
+                  <p className="text-xl font-bold">{uniqueClassMap.size}</p>
+                </div>
+                <div className="rounded-lg border border-border/60 bg-background/60 p-3">
+                  <p className="text-muted-foreground">Sections</p>
+                  <p className="text-xl font-bold">{uniqueSectionMap.size}</p>
+                </div>
+                <div className="rounded-lg border border-border/60 bg-background/60 p-3">
+                  <p className="text-muted-foreground">Subjects</p>
+                  <p className="text-xl font-bold">{assignedSubjects.length}</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </aside>
+
+        <main>
+      <div className="panel rounded-2xl p-6 shadow-xl mb-6">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h2 className="text-3xl font-bold">Faculty Dashboard</h2>
+            <p className="mt-1 text-muted-foreground">Create, publish, stop, and evaluate exams across assigned class-sections.</p>
+          </div>
+          <div className="flex w-full gap-2 sm:w-auto">
+            <Link href="/faculty/analytics" className="w-full sm:w-auto">
+              <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/85 sm:w-auto">
+                <BarChart3 className="mr-2 h-4 w-4" /> View Analytics
+              </Button>
+            </Link>
+            <Link href="/faculty/bulk/manage" className="w-full sm:w-auto">
+              <Button variant="outline" className="w-full border-border bg-card hover:bg-accent/20 sm:w-auto">
+                <Upload className="mr-2 h-4 w-4" /> Manage Users
+              </Button>
+            </Link>
+          </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
         <div className="panel p-4">
           <p className="text-xs uppercase tracking-wide text-muted-foreground">Total Exams</p>
           <div className="mt-2 flex items-center justify-between">
@@ -442,6 +745,34 @@ useEffect(() => {
             <BookOpen className="h-5 w-5 text-primary" />
           </div>
         </div>
+        <div className="panel p-4">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Stopped</p>
+          <div className="mt-2 flex items-center justify-between">
+            <p className="text-3xl font-black text-destructive">{stoppedExams}</p>
+            <Square className="h-5 w-5 text-destructive" />
+          </div>
+        </div>
+      </div>
+
+      <div className="panel rounded-xl p-5 shadow-md mb-8">
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-lg font-semibold">Assigned Classes and Sections</h3>
+          <span className="text-sm text-muted-foreground">{assignments.length} assignments</span>
+        </div>
+        {loadingAssignments ? (
+          <p className="text-sm text-muted-foreground">Loading assignment details...</p>
+        ) : classWiseSectionMap.size === 0 ? (
+          <p className="text-sm text-muted-foreground">No class-section assignments available yet.</p>
+        ) : (
+          <div className="grid gap-3 md:grid-cols-2">
+            {Array.from(classWiseSectionMap.entries()).map(([courseName, sectionSet]) => (
+              <div key={courseName} className="rounded-lg border border-border/60 bg-card/60 p-4">
+                <p className="font-semibold text-foreground">{courseName}</p>
+                <p className="mt-2 text-sm text-muted-foreground">{Array.from(sectionSet).join(", ")}</p>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="panel rounded-xl p-6 shadow-md mb-8">
@@ -486,90 +817,177 @@ useEffect(() => {
     <div className="space-y-8">
       {/* BASIC DETAILS */}
       <section className="space-y-4">
-        <h3 className="text-lg font-medium text-indigo-400 border-b border-slate-700 pb-1">
+        <h3 className="border-b border-border pb-1 text-lg font-medium text-primary">
           Basic Details
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-300">Exam Title : </label>
+            <label className="text-sm font-medium text-foreground/85">Exam Title : </label>
             <Input
               placeholder="e.g., Mid-Term Exam"
               value={form.title}
               onChange={(e) => setForm({ ...form, title: e.target.value })}
-              className="bg-slate-900 border-gray-700 placeholder:text-gray-400 focus:ring-indigo-600 mt-2"
+              className="mt-2 border-input bg-background/70 placeholder:text-muted-foreground"
             />
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-300">Duration (minutes) : </label>
+            <label className="text-sm font-medium text-foreground/85">Duration (minutes) : </label>
             <Input
               type="number"
               min={0}
               placeholder="e.g., 90"
               value={form.duration}
               onChange={(e) => setForm({ ...form, duration: Number(e.target.value) })}
-              className="bg-slate-900 border-gray-700 placeholder:text-gray-400 mt-2"
+              className="mt-2 border-input bg-background/70 placeholder:text-muted-foreground"
             />
           </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-300">Select Subject : </label>
+            <label className="text-sm font-medium text-foreground/85">Select Subject : </label>
             <Select
               value={form.subjectId}
               onValueChange={(v) => setForm({ ...form, subjectId: v })}
             >
-              <SelectTrigger className="bg-slate-900 border-gray-700 placeholder:text-gray-400 mt-2">
+              <SelectTrigger className="mt-2 border-input bg-background/70 placeholder:text-muted-foreground">
                 <SelectValue placeholder="Choose subject" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-900 text-white border-gray-700 placeholder:text-gray-400 mt-2">
-                {subjects.map((s) => (
+              <SelectContent className="mt-2 border-border bg-popover text-popover-foreground">
+                {assignedSubjects.map((s) => (
                   <SelectItem key={s._id} value={s._id}>
                     {s.name} {s.code && `(${s.code})`}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {assignedSubjects.length === 0 && (
+              <p className="text-xs text-destructive">No subject is assigned to your account. Contact admin.</p>
+            )}
           </div>
 
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-300">Select Course : </label>
+            <label className="text-sm font-medium text-foreground/85">Select Course : </label>
             <Select
               value={form.course}
               onValueChange={(v) => setForm({ ...form, course: v })}
             >
-              <SelectTrigger className="bg-slate-900 border-gray-700 placeholder:text-gray-400 mt-2">
+              <SelectTrigger className="mt-2 border-input bg-background/70 placeholder:text-muted-foreground">
                 <SelectValue placeholder="Choose course" />
               </SelectTrigger>
-              <SelectContent className="bg-slate-900 text-white border-gray-700 placeholder:text-gray-400 mt-2">
-                {courses.map((c) => (
+              <SelectContent className="mt-2 border-border bg-popover text-popover-foreground">
+                {assignedCourseOptions.map((c) => (
                   <SelectItem key={c._id} value={c._id}>
                     {c.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            {assignedCourseOptions.length === 0 && (
+              <p className="text-xs text-destructive">No class is assigned to your account. Contact admin.</p>
+            )}
           </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-foreground/85">Select Section(s) :</label>
+          <div className="mt-2 rounded-lg border border-input bg-background/70 p-3">
+            {!form.course ? (
+              <p className="text-sm text-muted-foreground">Select class first to load assigned sections.</p>
+            ) : loadingAssignedSections ? (
+              <p className="text-sm text-muted-foreground">Loading assigned sections...</p>
+            ) : assignedSections.length === 0 ? (
+              <p className="text-sm text-destructive">No sections assigned to you for this class.</p>
+            ) : (
+              <div className="grid gap-2 sm:grid-cols-2">
+                {assignedSections.map((section) => {
+                  const isChecked = form.targetSections.includes(section._id);
+                  return (
+                    <label
+                      key={section._id}
+                      className="flex cursor-pointer items-center gap-2 rounded-md border border-border/70 bg-card/60 px-3 py-2"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={(e) => {
+                          const checked = e.target.checked;
+                          setForm((prev) => ({
+                            ...prev,
+                            targetSections: checked
+                              ? [...prev.targetSections, section._id]
+                              : prev.targetSections.filter((id) => id !== section._id),
+                          }));
+                        }}
+                        className="h-4 w-4"
+                      />
+                      <span className="text-sm text-foreground">
+                        {section.name} ({section.code})
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-foreground/85">Exam Expiry :</label>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <Select
+              value={form.expiryPreset}
+              onValueChange={(v: "none" | "5h" | "1d" | "custom") =>
+                setForm((prev) => ({
+                  ...prev,
+                  expiryPreset: v,
+                  customExpiryAt: v === "custom" ? prev.customExpiryAt : "",
+                }))
+              }
+            >
+              <SelectTrigger className="mt-2 border-input bg-background/70 placeholder:text-muted-foreground">
+                <SelectValue placeholder="Select expiry" />
+              </SelectTrigger>
+              <SelectContent className="border-border bg-popover text-popover-foreground">
+                <SelectItem value="none">No auto-expiry</SelectItem>
+                <SelectItem value="5h">Expire after 5 hours</SelectItem>
+                <SelectItem value="1d">Expire after 1 day</SelectItem>
+                <SelectItem value="custom">Custom date and time</SelectItem>
+              </SelectContent>
+            </Select>
+            <Input
+              type="datetime-local"
+              value={form.customExpiryAt}
+              onChange={(e) =>
+                setForm((prev) => ({ ...prev, customExpiryAt: e.target.value, expiryPreset: "custom" }))
+              }
+              disabled={form.expiryPreset !== "custom"}
+              className="mt-2 border-input bg-background/70 placeholder:text-muted-foreground"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Expired or stopped exams are automatically blocked from submission.
+          </p>
         </div>
       </section>
 
       {/* QUESTION COUNTS */}
       <section className="space-y-4">
-        <h3 className="text-lg font-medium text-indigo-400 border-b border-slate-700 pb-1">
+        <h3 className="border-b border-border pb-1 text-lg font-medium text-primary">
           Question Distribution
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* MCQs */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-300">Multiple Choice Questions(MCQs) : </label>
+            <label className="text-sm font-medium text-foreground/85">Multiple Choice Questions(MCQs) : </label>
             <div className="flex gap-3 flex-wrap">
               <Input
                 type="number"
                 min={0}
-                className="w-28 bg-slate-900 border-gray-700 text-gray-400 mt-2"
+                className="mt-2 w-28 border-input bg-background/70 text-foreground"
                 value={form.veryShortCount}
                 onChange={(e) => setForm({ ...form, veryShortCount: Number(e.target.value) })}
               />
@@ -577,10 +995,10 @@ useEffect(() => {
                 value={form.veryShortDifficulty}
                 onValueChange={(v) => setForm({ ...form, veryShortDifficulty: v })}
               >
-                <SelectTrigger className="bg-slate-900 border-gray-700 w-36 mt-2">
+                <SelectTrigger className="mt-2 w-36 border-input bg-background/70">
                   <SelectValue placeholder="Difficulty" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 text-white border-gray-700">
+                <SelectContent className="border-border bg-popover text-popover-foreground">
                   <SelectItem value="easy">Easy</SelectItem>
                   <SelectItem value="medium">Medium</SelectItem>
                   <SelectItem value="hard">Hard</SelectItem>
@@ -591,12 +1009,12 @@ useEffect(() => {
 
           {/* Short Questions */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-300">Short Questions : </label>
+            <label className="text-sm font-medium text-foreground/85">Short Questions : </label>
             <div className="flex gap-3 flex-wrap">
               <Input
                 type="number"
                 min={0}
-                className="w-28 bg-slate-900 border-gray-700 text-gray-400 mt-2"
+                className="mt-2 w-28 border-input bg-background/70 text-foreground"
                 value={form.shortCount}
                 onChange={(e) => setForm({ ...form, shortCount: Number(e.target.value) })}
               />
@@ -604,10 +1022,10 @@ useEffect(() => {
                 value={form.shortDifficulty}
                 onValueChange={(v) => setForm({ ...form, shortDifficulty: v })}
               >
-                <SelectTrigger className="bg-slate-900 border-gray-700 w-36 mt-2">
+                <SelectTrigger className="mt-2 w-36 border-input bg-background/70">
                   <SelectValue placeholder="Difficulty" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 text-white border-gray-700">
+                <SelectContent className="border-border bg-popover text-popover-foreground">
                   <SelectItem value="easy">Easy</SelectItem>
                   <SelectItem value="medium">Medium</SelectItem>
                   <SelectItem value="hard">Hard</SelectItem>
@@ -618,12 +1036,12 @@ useEffect(() => {
 
           {/* Long Questions */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-300">Long Questions : </label>
+            <label className="text-sm font-medium text-foreground/85">Long Questions : </label>
             <div className="flex gap-3 flex-wrap">
               <Input
                 type="number"
                 min={0}
-                className="w-28 bg-slate-900 border-gray-700 text-gray-400"
+                className="w-28 border-input bg-background/70 text-foreground"
                 value={form.longCount}
                 onChange={(e) => setForm({ ...form, longCount: Number(e.target.value) })}
               />
@@ -631,10 +1049,10 @@ useEffect(() => {
                 value={form.longDifficulty}
                 onValueChange={(v) => setForm({ ...form, longDifficulty: v })}
               >
-                <SelectTrigger className="bg-slate-900 border-gray-700 w-36 mt-2">
+                <SelectTrigger className="mt-2 w-36 border-input bg-background/70">
                   <SelectValue placeholder="Difficulty" />
                 </SelectTrigger>
-                <SelectContent className="bg-slate-900 text-white border-gray-700">
+                <SelectContent className="border-border bg-popover text-popover-foreground">
                   <SelectItem value="easy">Easy</SelectItem>
                   <SelectItem value="medium">Medium</SelectItem>
                   <SelectItem value="hard">Hard</SelectItem>
@@ -645,19 +1063,19 @@ useEffect(() => {
 
           {/* Coding */}
           <div className="space-y-2">
-            <label className="text-sm font-medium text-gray-300">Coding Questions : </label>
+            <label className="text-sm font-medium text-foreground/85">Coding Questions : </label>
             <Input
               type="number"
               min={0}
               placeholder="e.g., 2"
-              className="w-28 bg-slate-900 border-gray-700 text-gray-400 mt-2 ml-2"
+              className="ml-2 mt-2 w-28 border-input bg-background/70 text-foreground"
               value={form.codingCount}
               onChange={(e) => setForm({ ...form, codingCount: Number(e.target.value) })}
             />
           </div>
         </div>
       </section>
-       <div className="px-2 pb-4 border-t border-gray-700 pt-4">
+      <div className="border-t border-border px-2 pb-4 pt-4">
             <label className="flex items-center space-x-3 cursor-pointer">
               <input
                 type="checkbox"
@@ -666,43 +1084,43 @@ useEffect(() => {
                   setForm({ ...form, proctoringEnabled: e.target.checked })
                 }
                 // Tailwind CSS classes for styling a simple checkbox
-                className="form-checkbox h-5 w-5 text-indigo-600 bg-transparent border-gray-700 rounded focus:ring-indigo-500"
+                className="form-checkbox h-5 w-5 rounded border-input bg-transparent text-primary focus:ring-primary"
               />
-              <span className="text-lg font-semibold text-indigo-400">
+              <span className="text-lg font-semibold text-primary">
                 🔒 Enable Live Proctoring (Webcam & Security)
               </span>
             </label>
-            <p className="text-sm text-gray-500 mt-1 ml-8">
+            <p className="ml-8 mt-1 text-sm text-muted-foreground">
               Enabling this requires webcam access and enforces security measures.
             </p>
           </div>
 
       {/* INSTRUCTIONS */}
       <section className="space-y-3">
-        <h3 className="text-lg font-medium text-indigo-400 border-b border-slate-700 pb-1">
+        <h3 className="border-b border-border pb-1 text-lg font-medium text-primary">
           Instructions / Notes
         </h3>
         <Textarea
           placeholder="Add any specific instructions for this exam..."
           value={form.instructions}
           onChange={(e) => setForm({ ...form, instructions: e.target.value })}
-          className="bg-slate-900 border-gray-700 placeholder:text-gray-500 min-h-[100px]"
+          className="min-h-[100px] border-input bg-background/70 placeholder:text-muted-foreground"
         />
       </section>
     </div>
 
-    <DialogFooter className="mt-8 border-t border-slate-700 pt-4 flex flex-wrap justify-end gap-3">
+    <DialogFooter className="mt-8 flex flex-wrap justify-end gap-3 border-t border-border pt-4">
       <Button
         onClick={() => setOpenModal(false)}
         variant="outline"
-        className="border-gray-600  bg-gray-800 hover:bg-slate-800"
+        className="border-border bg-card text-foreground hover:bg-accent/20"
       >
         Cancel
       </Button>
       <Button
         onClick={handleSaveExam}
         disabled={saving}
-        className="bg-indigo-600 hover:bg-indigo-500 text-white font-semibold px-6"
+        className="bg-primary px-6 font-semibold text-primary-foreground hover:bg-primary/85"
       >
         {saving ? "Saving..." : "Save Exam"}
       </Button>
@@ -711,99 +1129,172 @@ useEffect(() => {
 </Dialog>
 
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="panel mb-4 rounded-xl p-4 shadow-sm">
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-[1fr_220px] md:items-center">
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={examSearch}
+              onChange={(e) => setExamSearch(e.target.value)}
+              placeholder="Search exams by title, subject, or class"
+              className="pl-9"
+            />
+          </div>
+          <Select
+            value={statusFilter}
+            onValueChange={(v: "all" | "draft" | "published" | "stopped" | "expired") => setStatusFilter(v)}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All statuses</SelectItem>
+              <SelectItem value="published">Published</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="stopped">Stopped</SelectItem>
+              <SelectItem value="expired">Expired</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <p className="mt-2 text-sm text-muted-foreground">
+          Showing {filteredExams.length} of {safeExams.length} exams
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {loadingExams ? (
           <div className="col-span-full text-center py-10">
             Loading exams...
           </div>
-        ) : exams.length === 0 ? (
+        ) : filteredExams.length === 0 ? (
           <div className="col-span-full text-center py-10">
-            No exams created yet.
+            No exams match your current search/filter.
           </div>
         ) : (
-          exams.map((exam) =>{
+          filteredExams.map((exam) =>{
             const pendingCount = getPendingCount(exam._id);
+            const displayStatus = getDisplayStatus(exam);
             return(
             <div
               key={exam._id}
-              className="bg-[#07101a] border border-indigo-900 rounded-lg p-5 shadow-sm"
+              className="rounded-lg border border-border bg-card/80 p-5 shadow-sm transition-colors hover:bg-card"
             >
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="text-xl font-semibold text-blue-100 mb-4">{exam.title}</h3>
-                  <div className="text-sm text-gray-200 mb-4">
+              <div className="space-y-4">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <h3 className="mb-2 break-words text-xl font-semibold text-foreground">{exam.title}</h3>
+                    <div className="text-sm text-muted-foreground">
                     {exam.subject?.name}{" "}
                     {exam.subject?.code ? `(${exam.subject.code})` : ""}
                   </div>
-                  <div className="text-sm text-gray-500 mt-2">
-                    Course: {typeof exam.course === "object" ? exam.course?.name : exam.course}
-
                   </div>
-                  <div className="text-sm text-gray-400">
-                    Duration: {exam.duration} min
-                  </div>
-                </div>
-                <div className="flex flex-col items-end gap-2">
                   <div
-                    className={`text-xs font-bold px-2 py-1 rounded-full ${
-                      exam.status === "published"
-                        ? "bg-green-800 text-green-200"
-                        : "bg-gray-700 text-gray-300"
+                    className={`rounded-full px-2.5 py-1 text-xs font-bold ${
+                      displayStatus === "published"
+                        ? "border border-chart-2/30 bg-chart-2/15 text-chart-2"
+                        : displayStatus === "expired"
+                        ? "border border-amber-500/50 bg-amber-500/15 text-amber-600"
+                        : displayStatus === "stopped"
+                        ? "border border-destructive/40 bg-destructive/10 text-destructive"
+                        : "border border-border/70 bg-accent/40 text-muted-foreground"
                     }`}
                   >
-                    {(exam.status || "draft").toUpperCase()}
+                    {displayStatus.toUpperCase()}
                   </div>
-                  <div className="flex gap-2">
+                </div>
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    onClick={() => openEditModal(exam)}
+                    className="border-border bg-transparent hover:bg-accent/20"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    onClick={() => handleGeneratePaper(exam._id)}
+                    disabled={generating === exam._id}
+                    className="border-chart-2/40 bg-chart-2/15 text-chart-2 hover:bg-chart-2/25"
+                  >
+                    <Play className="w-4 h-4" />
+                  </Button>
+                  <Link href={`/faculty/question-paper/${exam._id}`} passHref>
                     <Button
+                      className="border-border bg-transparent hover:bg-accent/20"
                       size="icon"
                       variant="outline"
-                      onClick={() => openEditModal(exam)}
-                      className="bg-transparent border border-gray-700 hover:bg-indigo-800"
                     >
-                      <Edit3 className="w-4 h-4" />
+                      <Eye className="w-4 h-4" />
                     </Button>
-                    <Button
-                      size="icon"
-                      variant="outline"
-                      onClick={() => handleGeneratePaper(exam._id)}
-                      disabled={generating === exam._id}
-                      className="bg-teal-600 hover:bg-teal-500"
-                    >
-                      <Play className="w-4 h-4" />
-                    </Button>
-                    <Link href={`/faculty/question-paper/${exam._id}`} passHref>
-                      <Button
-                        className="bg-transparent border border-gray-700 hover:bg-indigo-800"
-                        size="icon"
-                        variant="outline"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </Button>
-                    </Link>
-                    <Button
-                      onClick={() => handlePublish(exam._id)}
-                      className={`bg-indigo-700 hover:bg-indigo-600 ${
-                        exam.status === "published"
-                          ? "opacity-50 cursor-not-allowed"
-                          : ""
-                      }`}
-                      disabled={exam.status === "published"}
-                    >
-                      Publish
-                    </Button>{" "}
+                  </Link>
+                  <Button
+                    onClick={() => handlePublish(exam._id)}
+                    className={`border border-primary/35 bg-primary/12 text-primary hover:bg-primary/20 ${
+                      displayStatus === "published"
+                        ? "cursor-not-allowed opacity-50"
+                        : ""
+                    }`}
+                    disabled={displayStatus === "published"}
+                  >
+                    Publish
+                  </Button>
+                  <Button
+                    onClick={() => handleQuickExpiry(exam._id, 5)}
+                    variant="outline"
+                    className="border-amber-500/40 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20"
+                  >
+                    +5h
+                  </Button>
+                  <Button
+                    onClick={() => handleQuickExpiry(exam._id, 24)}
+                    variant="outline"
+                    className="border-amber-500/40 bg-amber-500/10 text-amber-700 hover:bg-amber-500/20"
+                  >
+                    +1d
+                  </Button>
+                  <Button
+                    onClick={() => handleStopExam(exam._id)}
+                    className={`border border-destructive/45 bg-destructive/10 text-destructive hover:bg-destructive/20 ${
+                      displayStatus !== "published" ? "cursor-not-allowed opacity-50" : ""
+                    }`}
+                    disabled={displayStatus !== "published"}
+                  >
+                    <Square className="mr-1 h-4 w-4" /> Stop
+                  </Button>
+                </div>
+
+                <div className="space-y-1">
+                  <div className="text-sm text-muted-foreground">
+                    Course: {typeof exam.course === "object" ? exam.course?.name : exam.course}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Duration: {exam.duration} min
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Expiry: {exam.expiresAt ? new Date(exam.expiresAt).toLocaleString() : "No auto-expiry"}
                   </div>
                 </div>
               </div>
-              <div className="mt-4 text-sm text-gray-300">
+              <div className="mt-4 text-sm text-muted-foreground">
                 {/* FIX 3: Use the helper function for an accurate count */}
                 Questions: {countQuestions(exam.questions)}
+              </div>
+              <div className="mt-2 text-sm text-muted-foreground">
+                Sections: {Array.isArray(exam.targetSections) && exam.targetSections.length > 0
+                  ? exam.targetSections
+                      .map((section) => (typeof section === "string" ? section : `${section.name} (${section.code})`))
+                      .join(", ")
+                  : "All assigned sections"}
               </div>
               <div className="mt-3 flex gap-2">
 
               <Link href={`/faculty/results/${exam._id}`} passHref>
     <Button
     
-      className="relative bg-purple-700 hover:bg-purple-600 text-white border border-purple-600 cursor-pointer"
+      className="relative cursor-pointer border border-primary/40 bg-primary text-primary-foreground hover:bg-primary/85"
 
     >
       Results
@@ -818,8 +1309,9 @@ useEffect(() => {
                 <Button
                   variant="outline"
                   onClick={() => handleDelete(exam._id)}
-                  className="hover:bg-red-600 border border-red-600 text-white bg-red-500 cursor-pointer"
+                  className="cursor-pointer border border-destructive/60 bg-destructive/90 text-destructive-foreground hover:bg-destructive"
                 >
+                  <Trash2 className="mr-1 h-4 w-4" />
                   Delete
                 </Button>
               </div>
@@ -828,6 +1320,8 @@ useEffect(() => {
 })
         )}
       </div>
+      </main>
+    </div>
     </div>
   );
 }

@@ -1,50 +1,63 @@
+import { NextRequest, NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 import { connectDB } from "@/lib/db";
 import User from "@/lib/models/User";
+import { authorizeApiRoles } from "@/lib/apiAuth";
 
-export async function POST(req: Request) {
+const normalizeText = (value: unknown) => String(value ?? "").trim();
+
+export async function POST(req: NextRequest) {
   try {
+    const auth = authorizeApiRoles(req, ["admin", "faculty"]);
+    if (!auth.ok) return auth.response;
+
     await connectDB();
 
-    // Parse the uploaded file
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
 
     if (!file) {
-      return new Response(JSON.stringify({ error: "No file uploaded" }), { status: 400 });
+      return NextResponse.json({ error: "No file uploaded" }, { status: 400 });
     }
 
-    // Read file buffer
     const bytes = await file.arrayBuffer();
     const workbook = XLSX.read(bytes, { type: "buffer" });
     const sheet = workbook.Sheets[workbook.SheetNames[0]];
-    const rows = XLSX.utils.sheet_to_json(sheet);
+    const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, { defval: "" });
 
     if (!rows.length) {
-      return new Response(JSON.stringify({ error: "No data found in sheet" }), { status: 400 });
+      return NextResponse.json({ error: "No data found in sheet" }, { status: 400 });
     }
 
-    // Extract email or ID list
-    const userEmails = rows
-      .map((row: any) => row.email?.trim())
-      .filter((email: string | undefined) => !!email);
+    const userEmails = Array.from(
+      new Set(
+        rows
+          .map((row) => normalizeText(row.email).toLowerCase())
+          .filter((email) => email.length > 0)
+      )
+    );
 
     if (!userEmails.length) {
-      return new Response(JSON.stringify({ error: "No valid emails found" }), { status: 400 });
+      return NextResponse.json({ error: "No valid emails found" }, { status: 400 });
     }
 
-    // Perform bulk delete
-    const result = await User.deleteMany({ email: { $in: userEmails } });
+    const deleteQuery: Record<string, unknown> = { email: { $in: userEmails } };
+    if (auth.user.role === "faculty") {
+      deleteQuery.role = "student";
+    }
 
-    return new Response(
-      JSON.stringify({
-        message: `Deleted ${result.deletedCount} users successfully.`,
+    const result = await User.deleteMany(deleteQuery);
+
+    return NextResponse.json({
+      message: `Deleted ${result.deletedCount} users successfully.`,
+      summary: {
+        requested: userEmails.length,
         deletedCount: result.deletedCount,
-      }),
-      { status: 200 }
-    );
+        skipped: Math.max(0, userEmails.length - Number(result.deletedCount || 0)),
+      },
+    });
   } catch (error: any) {
     console.error("Bulk Delete Error:", error);
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    return NextResponse.json({ error: error.message || "Bulk delete failed" }, { status: 500 });
   }
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useMemo } from "react";
-import { Edit3, Trash2, User } from "lucide-react";
+import { Edit3, Trash2, User, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { toast } from "sonner";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface UserType {
   _id: string;
@@ -29,11 +30,16 @@ export default function UsersTable() {
   const [users, setUsers] = useState<UserType[]>([]);
   const [filterRole, setFilterRole] = useState("All");
   const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
   const [editUser, setEditUser] = useState<UserType | null>(null);
   const [loading, setLoading] = useState(false);
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(25);
 
   // Fetch users
   const fetchUsers = async () => {
+    setInitialLoading(true);
     try {
       const res = await fetch("/api/users");
       const data = await res.json();
@@ -41,12 +47,21 @@ export default function UsersTable() {
     } catch (err) {
       console.error(err);
       toast.error("Failed to fetch users");
+    } finally {
+      setInitialLoading(false);
     }
   };
 
   useEffect(() => {
     fetchUsers();
   }, []);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
   // Save edited user
   const handleSave = async () => {
@@ -95,10 +110,11 @@ export default function UsersTable() {
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
       const fullName = `${u.firstName} ${u.lastName}`.toLowerCase();
+      const normalizedSearch = debouncedSearchTerm.toLowerCase();
       const searchMatch =
-        fullName.includes(searchTerm.toLowerCase()) ||
-        u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (u.username && u.username.toLowerCase().includes(searchTerm.toLowerCase()));
+        fullName.includes(normalizedSearch) ||
+        u.email.toLowerCase().includes(normalizedSearch) ||
+        (u.username && u.username.toLowerCase().includes(normalizedSearch));
 
       const roleMatch =
         filterRole === "All" ||
@@ -106,13 +122,25 @@ export default function UsersTable() {
 
       return searchMatch && roleMatch;
     });
-  }, [users, searchTerm, filterRole]);
+  }, [users, debouncedSearchTerm, filterRole]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [debouncedSearchTerm, filterRole, pageSize]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredUsers.length / pageSize));
+  const currentPage = Math.min(page, totalPages);
+  const paginatedUsers = filteredUsers.slice(
+    (currentPage - 1) * pageSize,
+    currentPage * pageSize
+  );
 
   return (
     <div className="space-y-4 text-foreground">
       {loading && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/65 backdrop-blur-sm">
-          <p className="text-foreground text-lg">Loading...</p>
+        <div className="inline-flex items-center gap-2 rounded-full border border-border/70 bg-background/80 px-3 py-1 text-xs text-muted-foreground">
+          <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+          Processing user action
         </div>
       )}
 
@@ -135,9 +163,34 @@ export default function UsersTable() {
             <SelectItem value="Student">Student</SelectItem>
           </SelectContent>
         </Select>
+
+        <Select onValueChange={(val) => setPageSize(Number(val))} defaultValue="25">
+          <SelectTrigger className="w-40">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent className="bg-popover text-popover-foreground border-border">
+            <SelectItem value="10">10 per page</SelectItem>
+            <SelectItem value="25">25 per page</SelectItem>
+            <SelectItem value="50">50 per page</SelectItem>
+            <SelectItem value="100">100 per page</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <p className="text-xs text-muted-foreground">
+          Showing {paginatedUsers.length} of {filteredUsers.length} users
+        </p>
       </div>
 
       {/* Scrollable Table */}
+      {initialLoading ? (
+        <div className="space-y-3 rounded-xl border border-border panel p-4">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-14 w-full" />
+          <Skeleton className="h-14 w-full" />
+          <Skeleton className="h-14 w-full" />
+          <Skeleton className="h-14 w-full" />
+        </div>
+      ) : (
       <div className="overflow-x-auto max-h-[600px] border border-border rounded-xl panel">
         <table className="w-full text-left">
           <thead className="text-sm text-muted-foreground sticky top-0 bg-card z-10">
@@ -150,7 +203,7 @@ export default function UsersTable() {
           </thead>
 
           <tbody className="divide-y divide-border/70">
-            {filteredUsers.map((u) => (
+            {paginatedUsers.map((u) => (
               <tr key={u._id} className="bg-card/65 text-foreground hover:bg-accent/12 transition-colors">
                 <td className="py-4 px-4">
                   <div className="flex items-center gap-3">
@@ -224,7 +277,7 @@ export default function UsersTable() {
               </tr>
             ))}
 
-            {filteredUsers.length === 0 && (
+            {paginatedUsers.length === 0 && (
               <tr>
                 <td colSpan={4} className="text-center py-6 text-muted-foreground">
                   No users found
@@ -234,6 +287,31 @@ export default function UsersTable() {
           </tbody>
         </table>
       </div>
+      )}
+
+      {!initialLoading && filteredUsers.length > 0 && (
+        <div className="flex items-center justify-end gap-2">
+          <Button
+            variant="outline"
+            className="border-border bg-card hover:bg-accent/20"
+            disabled={currentPage <= 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+          >
+            Previous
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            Page {currentPage} of {totalPages}
+          </span>
+          <Button
+            variant="outline"
+            className="border-border bg-card hover:bg-accent/20"
+            disabled={currentPage >= totalPages}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+          >
+            Next
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

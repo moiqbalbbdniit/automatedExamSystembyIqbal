@@ -95,12 +95,12 @@ export default function AddDepartmentPage() {
           </thead>
           <tbody className="divide-y divide-border">
             {departments.map((d) => (
-              <tr key={d._id} className="hover:bg-gray-800 transition">
+              <tr key={d._id} className="transition-colors hover:bg-accent/15">
                 <td className="py-3 px-4 font-medium">{d.name}</td>
                 <td className="py-3 px-4">{d.code}</td>
                 <td className="py-3 px-4 text-right">
                   <button
-                    className="text-red-500 hover:text-red-600"
+                    className="text-destructive/80 transition-colors hover:text-destructive"
                     onClick={() => handleDelete(d._id)}
                   >
                     <Trash2 className="w-4 h-4" />

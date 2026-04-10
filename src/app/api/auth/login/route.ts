@@ -13,7 +13,14 @@ export async function POST(req: Request) {
     await connectDB();
     const { email, password, role } = await req.json();
 
-    const user = await User.findOne({ email, role }).populate("course", "name description");
+    let userQuery = User.findOne({ email, role }).populate("course", "name description");
+
+    // Guard populate for hot-reload/model-cache scenarios where old schema lacks section.
+    if (User.schema.path("section")) {
+      userQuery = userQuery.populate("section", "name code");
+    }
+
+    const user = await userQuery;
     if (!user)
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
 
@@ -21,34 +28,41 @@ export async function POST(req: Request) {
     if (!valid)
       return NextResponse.json({ error: "Invalid credentials" }, { status: 401 });
 
-    // ✅ keep course._id consistent with frontend naming
+    const sessionUser = {
+      id: user._id,
+      email: user.email,
+      role: user.role,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      fullName: `${user.firstName || ""} ${user.lastName || ""}`.trim(),
+      course: user.course
+        ? { _id: user.course._id.toString(), name: user.course.name }
+        : null,
+      section: user.section
+        ? {
+            _id: user.section._id.toString(),
+            name: user.section.name,
+            code: user.section.code,
+          }
+        : null,
+      className: user.course?.name || null,
+      sectionCode: user.section?.code || null,
+      phone: user.phone || null,
+      address: user.address || null,
+      zipCode: user.zipCode || null,
+      country: user.country || null,
+      language: user.language || null,
+    };
+
     const token = jwt.sign(
-      {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        course: user.course
-          ? { _id: user.course._id.toString(), name: user.course.name }
-          : null,
-      },
+      sessionUser,
       JWT_SECRET,
       { expiresIn: "7d" }
     );
 
     const res = NextResponse.json({
       message: "Login successful",
-      user: {
-        id: user._id,
-        email: user.email,
-        role: user.role,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        course: user.course
-          ? { _id: user.course._id.toString(), name: user.course.name }
-          : null,
-      },
+      user: sessionUser,
     });
 
     res.cookies.set("exam_system_token", token, {

@@ -50,3 +50,11 @@ next-env.d.ts
 #pycache files
 **/__pycache__/
 **/*.py[cod]
+
+# python leftovers in this Next.js project
+main.py
+*.py
+.python-version
+.venv/
+venv/
+env/

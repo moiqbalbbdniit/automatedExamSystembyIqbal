@@ -180,6 +180,34 @@
     font-family: var(--font-serif);
     letter-spacing: -0.02em;
   }
+
+  input[data-slot="input"],
+  textarea[data-slot="textarea"],
+  button[data-slot="select-trigger"] {
+    background-color: color-mix(in oklch, var(--background) 86%, var(--card) 14%);
+    color: var(--foreground);
+    border-color: var(--border);
+  }
+
+  input[data-slot="input"]::placeholder,
+  textarea[data-slot="textarea"]::placeholder {
+    color: var(--muted-foreground);
+  }
+
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  textarea:-webkit-autofill,
+  textarea:-webkit-autofill:hover,
+  textarea:-webkit-autofill:focus,
+  select:-webkit-autofill,
+  select:-webkit-autofill:hover,
+  select:-webkit-autofill:focus {
+    -webkit-text-fill-color: var(--foreground);
+    box-shadow: 0 0 0 1000px color-mix(in oklch, var(--background) 86%, var(--card) 14%) inset;
+    transition: background-color 9999s ease-in-out 0s;
+    border-color: var(--border);
+  }
 }
 
 @utility panel {

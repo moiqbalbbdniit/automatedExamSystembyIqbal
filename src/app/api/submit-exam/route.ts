@@ -26,6 +26,14 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Exam not found." }, { status: 404 });
     }
 
+    if (!exam.isPublished || exam.status === "stopped") {
+      return NextResponse.json({ error: "This exam is not active." }, { status: 400 });
+    }
+
+    if (exam.expiresAt && new Date(exam.expiresAt) <= new Date()) {
+      return NextResponse.json({ error: "This exam has expired." }, { status: 400 });
+    }
+
     // Prevent duplicate submission
     const existing = await Submission.findOne({ examId, studentId });
     if (existing) {

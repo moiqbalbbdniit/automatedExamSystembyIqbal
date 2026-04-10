@@ -3,11 +3,24 @@
 import { useEffect, useState } from "react";
 import { Loader2, CalendarDays, Eye, AlertTriangle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+
+type MonitoredExam = {
+  id: string;
+  title: string;
+  subject: string;
+  faculty: string;
+  totalSubmissions: number;
+  totalStudents: number;
+  unevaluated: number;
+};
 
 export default function ExamMonitor() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedExam, setSelectedExam] = useState<MonitoredExam | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
@@ -43,9 +56,23 @@ export default function ExamMonitor() {
   // Loading UI
   if (loading)
     return (
-      <div className="flex justify-center items-center h-40 text-muted-foreground">
-        <Loader2 className="w-6 h-6 animate-spin" />
-        <p className="ml-2">Loading exam monitor...</p>
+      <div className="panel rounded-2xl p-6 shadow-md text-foreground">
+        <div className="mb-6 flex items-center justify-between">
+          <Skeleton className="h-7 w-40" />
+          <div className="inline-flex items-center gap-2 text-xs text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin text-primary" /> Loading exam monitor
+          </div>
+        </div>
+        <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
+          <Skeleton className="h-20 w-full rounded-xl" />
+          <Skeleton className="h-20 w-full rounded-xl" />
+          <Skeleton className="h-20 w-full rounded-xl" />
+          <Skeleton className="h-20 w-full rounded-xl" />
+        </div>
+        <div className="space-y-3">
+          <Skeleton className="h-24 w-full rounded-xl" />
+          <Skeleton className="h-24 w-full rounded-xl" />
+        </div>
       </div>
     );
 
@@ -89,7 +116,7 @@ export default function ExamMonitor() {
       </div>
 
       {/* KPI Section */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+      <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
         <KpiCard title="Total Exams" value={kpis.totalExams || 0} />
         <KpiCard title="Total Students" value={kpis.totalStudents || 0} />
         <KpiCard
@@ -111,7 +138,7 @@ export default function ExamMonitor() {
         </p>
       ) : (
         <div className="space-y-4">
-          {exams.map((exam: any) => (
+          {exams.map((exam: MonitoredExam) => (
             <div
               key={exam.id}
               className="bg-card/70 p-4 rounded-xl border border-border"
@@ -123,7 +150,11 @@ export default function ExamMonitor() {
                     {exam.subject} • {exam.faculty}
                   </p>
                 </div>
-                <Button variant="ghost" className="text-muted-foreground hover:text-foreground">
+                <Button
+                  variant="ghost"
+                  className="text-muted-foreground hover:text-foreground"
+                  onClick={() => setSelectedExam(exam)}
+                >
                   <Eye className="w-4 h-4 mr-1" /> View
                 </Button>
               </div>
@@ -152,6 +183,32 @@ export default function ExamMonitor() {
           ))}
         </div>
       )}
+
+      <Dialog open={!!selectedExam} onOpenChange={(open) => !open && setSelectedExam(null)}>
+        <DialogContent className="border border-border bg-popover text-popover-foreground sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Exam Snapshot</DialogTitle>
+          </DialogHeader>
+          {selectedExam && (
+            <div className="space-y-3">
+              <div className="rounded-lg border border-border p-3">
+                <p className="text-sm text-muted-foreground">Title</p>
+                <p className="font-semibold">{selectedExam.title}</p>
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="rounded-lg border border-border p-3"><p className="text-xs text-muted-foreground">Subject</p><p className="font-medium">{selectedExam.subject}</p></div>
+                <div className="rounded-lg border border-border p-3"><p className="text-xs text-muted-foreground">Faculty</p><p className="font-medium">{selectedExam.faculty}</p></div>
+                <div className="rounded-lg border border-border p-3"><p className="text-xs text-muted-foreground">Students</p><p className="font-semibold">{selectedExam.totalStudents}</p></div>
+                <div className="rounded-lg border border-border p-3"><p className="text-xs text-muted-foreground">Submissions</p><p className="font-semibold text-chart-2">{selectedExam.totalSubmissions}</p></div>
+              </div>
+              <div className="rounded-lg border border-border p-3">
+                <p className="text-xs text-muted-foreground">Unevaluated</p>
+                <p className="font-semibold text-accent">{selectedExam.unevaluated}</p>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -166,9 +223,9 @@ function KpiCard({
   color?: string;
 }) {
   return (
-    <div className="bg-card/75 border border-border p-4 rounded-xl text-center">
-      <h3 className="text-xs uppercase tracking-wide text-muted-foreground">{title}</h3>
-      <p className={`text-2xl font-bold ${color || "text-foreground"}`}>
+    <div className="rounded-xl border border-border bg-card/75 p-4 text-center shadow-sm">
+      <h3 className="text-xs uppercase tracking-[0.14em] text-muted-foreground">{title}</h3>
+      <p className={`mt-1 text-3xl font-black ${color || "text-foreground"}`}>
         {value ?? 0}
       </p>
     </div>

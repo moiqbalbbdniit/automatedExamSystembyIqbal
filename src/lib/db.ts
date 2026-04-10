@@ -14,19 +14,39 @@ if (!MONGODB_URI) {
   throw new Error("Please define MONGODB_URI in your .env file");
 }
 
-let isConnected = false;
+type MongooseCache = {
+  conn: typeof mongoose | null;
+  promise: Promise<typeof mongoose> | null;
+};
+
+declare global {
+  var _mongooseCache: MongooseCache | undefined;
+}
+
+const cache: MongooseCache = global._mongooseCache || { conn: null, promise: null };
+
+if (!global._mongooseCache) {
+  global._mongooseCache = cache;
+}
 
 export const connectDB = async () => {
-  if (isConnected) return;
+  if (cache.conn && mongoose.connection.readyState === 1) {
+    return cache.conn;
+  }
 
   try {
-    await mongoose.connect(MONGODB_URI, {
-      serverSelectionTimeoutMS: 10000,
-    });
-    isConnected = true;
+    if (!cache.promise) {
+      cache.promise = mongoose.connect(MONGODB_URI, {
+        serverSelectionTimeoutMS: 10000,
+      });
+    }
+
+    cache.conn = await cache.promise;
     console.log("✅ MongoDB Connected");
+    return cache.conn;
   } catch (error) {
-    isConnected = false;
+    cache.promise = null;
+    cache.conn = null;
     console.error("❌ MongoDB Connection Error:", error);
     throw error;
   }
