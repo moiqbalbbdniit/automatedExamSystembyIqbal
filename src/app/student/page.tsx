@@ -224,6 +224,9 @@ export default function StudentDashboard() {
             <a href="#student-exams" className="flex items-center gap-2 rounded-lg border border-border/60 bg-card/70 px-3 py-2 text-sm hover:bg-accent/20">
               <BookOpen className="h-4 w-4" /> My Exams
             </a>
+            <NextLink href="/student/achievements" className="flex items-center gap-2 rounded-lg border border-border/60 bg-card/70 px-3 py-2 text-sm hover:bg-accent/20">
+              <BookOpen className="h-4 w-4" /> Achievements
+            </NextLink>
             <NextLink href={studentId ? `/student/results/${studentId}` : "#"} className="flex items-center gap-2 rounded-lg border border-border/60 bg-card/70 px-3 py-2 text-sm hover:bg-accent/20">
               <FileText className="h-4 w-4" /> Results
             </NextLink>
