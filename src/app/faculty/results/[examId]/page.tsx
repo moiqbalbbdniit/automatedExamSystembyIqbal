@@ -36,9 +36,12 @@ type EvaluationDetail = {
 };
 
 type Answer = {
+  questionId?: string;
   questionText: string;
   studentAnswer: string;
-  maximumScore: number;
+  marks?: number;
+  questionType?: string;
+  correctAnswer?: string;
 };
 
 type Submission = {
@@ -143,9 +146,12 @@ export default function ExamResultsPage() {
         examId: s.examId,
         studentId: s.studentId,
         answers: s.answers.map((a) => ({
+          questionId: a.questionId,
           questionText: a.questionText,
           studentAnswer: a.studentAnswer,
-          maximumScore: a.maximumScore || 10,
+          maximumScore: a.marks || 10,
+          questionType: a.questionType,
+          correctAnswer: a.correctAnswer,
         })),
       }));
   };

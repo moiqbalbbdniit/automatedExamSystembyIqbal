@@ -1,31 +1,47 @@
 import { NextResponse } from "next/server";
-import { connectDB } from "@/lib/db";
-import Submission, { ISubmission } from "@/lib/models/Submission";
-import ExamResult, { IExamResult } from "@/lib/models/ExamResult";
 import axios from "axios";
+import { connectDB } from "@/lib/db";
+import Submission from "@/lib/models/Submission";
+import ExamResult from "@/lib/models/ExamResult";
+import Exam from "@/lib/models/Exam";
 
-const PYTHON_API_URL = "https://exammodelbydsteam.onrender.com/api/v1/evaluate-submission";
+const EXAM_MODEL_BASE_URL =
+  process.env.EXAM_MODEL_URL || process.env.NEXT_PUBLIC_EXAM_MODEL_URL || "http://127.0.0.1:8000";
+const PYTHON_API_URL = `${EXAM_MODEL_BASE_URL}/api/v1/evaluate-submission`;
+
+type IncomingAnswer = {
+  questionId?: string;
+  questionText: string;
+  studentAnswer: string;
+  maximumScore: number;
+  questionType?: string;
+  correctAnswer?: string;
+};
+
+type IncomingSubmission = {
+  examId: string;
+  studentId: string;
+  answers: IncomingAnswer[];
+};
+
+const normalize = (value: unknown) => String(value ?? "").trim().toLowerCase();
 
 export async function POST(req: Request) {
   try {
     await connectDB();
 
-    // 🧩 Parse payload (expected: array of submissions)
-    const payload = await req.json();
-
+    const payload = (await req.json()) as IncomingSubmission[];
     if (!Array.isArray(payload) || payload.length === 0) {
-      console.log("❌ Invalid payload:", payload);
-      return NextResponse.json({ error: "Expected an array of submissions" }, { status: 400 });
+      return NextResponse.json({ error: "Expected a non-empty array of submissions" }, { status: 400 });
     }
 
-    // 🧠 Validate structure
     const isValid = payload.every(
       (p) =>
         p.examId &&
         p.studentId &&
         Array.isArray(p.answers) &&
         p.answers.every(
-          (a: any) =>
+          (a) =>
             typeof a.questionText === "string" &&
             typeof a.studentAnswer === "string" &&
             typeof a.maximumScore === "number"
@@ -33,110 +49,156 @@ export async function POST(req: Request) {
     );
 
     if (!isValid) {
-      console.log("❌ Invalid data format in request:", payload);
       return NextResponse.json({ error: "Invalid submission data format" }, { status: 400 });
     }
 
-    console.log(`📥 Received ${payload.length} submissions for evaluation`);
+    const examIds = Array.from(new Set(payload.map((p) => p.examId)));
+    const exams = await Exam.find({ _id: { $in: examIds } })
+      .select("_id paper_solutions_map")
+      .lean();
 
-    // ⚙️ Send payload to Python evaluation API
-    const response = await axios.post(PYTHON_API_URL, payload, { timeout: 180000 });
-    const data = response.data;
+    const examSolutionIndex = new Map<string, { byId: Map<string, any>; byQuestion: Map<string, any> }>();
 
-    const reports = data?.batch_evaluation_reports || [];
-    if (!reports.length) {
-      throw new Error("Invalid response from Python model — no batch_evaluation_reports found");
+    for (const exam of exams as any[]) {
+      const raw = exam?.paper_solutions_map || {};
+      const byId = new Map<string, any>();
+      const byQuestion = new Map<string, any>();
+      Object.entries(raw).forEach(([qId, value]) => {
+        const solution = value as any;
+        byId.set(String(qId), solution);
+        byQuestion.set(normalize(solution?.question), solution);
+      });
+      examSolutionIndex.set(String(exam._id), { byId, byQuestion });
     }
 
-    const savedResults: IExamResult[] = [];
-
-    // 🧾 Process each evaluation result
-    for (const report of reports) {
-      const summary = report.report_summary;
-      if (!summary) continue;
-
-      console.log("🧾 Report summary received:", summary);
-
-      // 🛑 Skip already evaluated students
-      const exists = await ExamResult.findOne({
-        examId: summary.exam_id,
-        studentId: summary.student_id,
-      });
-      if (exists) {
-        console.log(`⚠️ Student ${summary.student_id} already evaluated`);
-        continue;
-      }
-
-      // 🔍 Get related submission
-      const submission = await Submission.findOne({
-        examId: summary.exam_id,
-        studentId: summary.student_id,
-      });
-      if (!submission) {
-        console.warn(`⚠️ No submission found for student ${summary.student_id}`);
-        continue;
-      }
-
-      // ✅ Safely parse numeric fields
-      const obtained = Number(summary.total_score_obtained ?? 0);
-      const max = Number(summary.total_max_score ?? 0);
-      const percent = Number(summary.percentage_obtained ?? 0);
-
-      if (isNaN(obtained) || isNaN(max) || isNaN(percent)) {
-        console.error("⚠️ Invalid numeric values in report:", summary);
-        continue;
-      }
-
-      // 💾 Save result in ExamResult collection
-      const savedResult = await ExamResult.create({
-        examId: summary.exam_id,
-        studentId: summary.student_id,
-        facultyId: submission.facultyId || null,
-        totalMarksObtained: obtained,
-        totalMaxMarks: max,
-        percentage: percent,
-        feedback: summary.overall_feedback || "",
-        strengths: Array.isArray(summary.collective_strengths)
-          ? summary.collective_strengths
-          : [],
-        weaknesses: Array.isArray(summary.collective_weaknesses)
-          ? summary.collective_weaknesses
-          : [],
-      });
-
-      // 🧩 Update submission status
-      await Submission.updateOne(
-        { examId: summary.exam_id, studentId: summary.student_id },
-        {
-          $set: {
-            status: "evaluated",
-            evaluation_report: savedResult._id,
-            total_score: obtained,
-            max_score: max,
-          },
-        }
-      );
-
-      savedResults.push(savedResult);
-    }
-
-    console.log("✅ Evaluation complete:", savedResults.length, "students evaluated");
-
-    // 🧠 Prepare frontend response
-    const studentResults = reports.map((r: any) => {
-      const s = r.report_summary;
+    const enrichedPayload = payload.map((submission) => {
+      const solutionIndex = examSolutionIndex.get(String(submission.examId));
       return {
-        examId: s.exam_id,
-        studentId: s.student_id,
-        totalQuestions: s.total_questions_evaluated,
-        totalMarksObtained: s.total_score_obtained,
-        totalMaxMarks: s.total_max_score,
-        percentage: s.percentage_obtained,
-        feedback: s.overall_feedback,
-        strengths: s.collective_strengths || [],
-        weaknesses: s.collective_weaknesses || [],
+        ...submission,
+        answers: submission.answers.map((answer) => {
+          const solution =
+            (answer.questionId && solutionIndex?.byId.get(String(answer.questionId))) ||
+            solutionIndex?.byQuestion.get(normalize(answer.questionText));
+
+          const maximumScore =
+            typeof answer.maximumScore === "number" && answer.maximumScore > 0
+              ? answer.maximumScore
+              : Number(solution?.marks || 10);
+
+          return {
+            ...answer,
+            questionId: answer.questionId || solution?.Q_ID,
+            questionType: answer.questionType || solution?.type,
+            correctAnswer: answer.correctAnswer || solution?.correct_answer,
+            maximumScore,
+          };
+        }),
       };
     });
+
+    const response = await axios.post(PYTHON_API_URL, enrichedPayload, {
+      timeout: 180000,
+      headers: { "Content-Type": "application/json" },
+    });
+
+    const reports = response.data?.batch_evaluation_reports || [];
+    if (!Array.isArray(reports) || reports.length === 0) {
+      throw new Error("Invalid response from model service: no batch_evaluation_reports");
+    }
+
+    const summaryEntries = reports
+      .map((report: any) => report?.report_summary)
+      .filter((summary: any) => summary?.exam_id && summary?.student_id && !summary?.error);
+
+    if (summaryEntries.length === 0) {
+      return NextResponse.json({ success: true, totalEvaluated: 0, results: [] });
+    }
+
+    const existingResults = await ExamResult.find({
+      $or: summaryEntries.map((s: any) => ({ examId: s.exam_id, studentId: s.student_id })),
+    })
+      .select("examId studentId")
+      .lean();
+
+    const existingKeySet = new Set(existingResults.map((r: any) => `${String(r.examId)}|${String(r.studentId)}`));
+
+    const submissions = await Submission.find({
+      $or: summaryEntries.map((s: any) => ({ examId: s.exam_id, studentId: s.student_id })),
+    })
+      .select("_id examId studentId facultyId")
+      .lean();
+
+    const submissionByKey = new Map(submissions.map((s: any) => [`${String(s.examId)}|${String(s.studentId)}`, s]));
+
+    const resultDocs = summaryEntries
+      .filter((s: any) => !existingKeySet.has(`${String(s.exam_id)}|${String(s.student_id)}`))
+      .map((s: any) => {
+        const key = `${String(s.exam_id)}|${String(s.student_id)}`;
+        const sub = submissionByKey.get(key);
+        return {
+          examId: s.exam_id,
+          studentId: s.student_id,
+          facultyId: sub?.facultyId || null,
+          totalMarksObtained: Number(s.total_score_obtained || 0),
+          totalMaxMarks: Number(s.total_max_score || 0),
+          percentage: Number(s.percentage_obtained || 0),
+          feedback: s.overall_feedback || "",
+          strengths: Array.isArray(s.collective_strengths) ? s.collective_strengths : [],
+          weaknesses: Array.isArray(s.collective_weaknesses) ? s.collective_weaknesses : [],
+        };
+      });
+
+    if (resultDocs.length > 0) {
+      await ExamResult.insertMany(resultDocs, { ordered: false });
+    }
+
+    const allSavedResults = await ExamResult.find({
+      $or: summaryEntries.map((s: any) => ({ examId: s.exam_id, studentId: s.student_id })),
+    })
+      .select("_id examId studentId")
+      .lean();
+
+    const resultIdByKey = new Map(
+      allSavedResults.map((r: any) => [`${String(r.examId)}|${String(r.studentId)}`, String(r._id)])
+    );
+
+    const submissionBulkOps = summaryEntries
+      .map((s: any) => {
+        const key = `${String(s.exam_id)}|${String(s.student_id)}`;
+        const evalResultId = resultIdByKey.get(key);
+        if (!evalResultId) return null;
+
+        return {
+          updateOne: {
+            filter: { examId: s.exam_id, studentId: s.student_id },
+            update: {
+              $set: {
+                status: "evaluated",
+                evaluation_report: evalResultId,
+                total_score: Number(s.total_score_obtained || 0),
+                max_score: Number(s.total_max_score || 0),
+              },
+            },
+          },
+        };
+      })
+      .filter(Boolean) as any[];
+
+    if (submissionBulkOps.length > 0) {
+      await Submission.bulkWrite(submissionBulkOps, { ordered: false });
+    }
+
+    const studentResults = summaryEntries.map((s: any) => ({
+      examId: s.exam_id,
+      studentId: s.student_id,
+      totalQuestions: s.total_questions_evaluated,
+      totalMarksObtained: s.total_score_obtained,
+      totalMaxMarks: s.total_max_score,
+      percentage: s.percentage_obtained,
+      feedback: s.overall_feedback,
+      strengths: s.collective_strengths || [],
+      weaknesses: s.collective_weaknesses || [],
+    }));
 
     return NextResponse.json({
       success: true,
@@ -144,7 +206,7 @@ export async function POST(req: Request) {
       results: studentResults,
     });
   } catch (err: any) {
-    console.error("❌ Evaluation error:", err.response?.data || err.message);
+    console.error("Evaluation error:", err.response?.data || err.message);
     return NextResponse.json(
       { error: err.response?.data || err.message || "Internal Server Error" },
       { status: 500 }

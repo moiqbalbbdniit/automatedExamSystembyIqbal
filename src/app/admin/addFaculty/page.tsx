@@ -5,67 +5,79 @@ import { UserPlus, Trash2,ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
+import { toast } from "sonner";
 
 type Faculty = {
   _id: string;
-  name: string;
+  firstName: string;
+  lastName: string;
   email: string;
-  department: string;
-};
-
-type Department = {
-  _id: string;
-  name: string;
+  role: string;
 };
 
 export default function AddFacultyPage() {
   const [faculties, setFaculties] = useState<Faculty[]>([]);
-  const [departments, setDepartments] = useState<Department[]>([]);
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [department, setDepartment] = useState("");
+  const [password, setPassword] = useState("");
+
+  const loadFaculties = async () => {
+    try {
+      const res = await fetch("/api/users?role=faculty");
+      const data = await res.json();
+      const list = Array.isArray(data) ? data : [];
+      setFaculties(list.filter((item: Faculty) => item.role === "faculty"));
+    } catch (error) {
+      console.error("Failed to load faculties", error);
+      toast.error("Failed to load faculty users.");
+    }
+  };
 
   // Load faculties
   useEffect(() => {
-    fetch("/api/faculty")
-      .then((res) => res.json())
-      .then(setFaculties);
-  }, []);
-
-  // Load departments
-  useEffect(() => {
-    fetch("/api/department")
-      .then((res) => res.json())
-      .then(setDepartments);
+    loadFaculties();
   }, []);
 
   const handleAdd = async () => {
-    if (!name || !email || !department) return;
-    const res = await fetch("/api/faculty", {
+    if (!firstName || !lastName || !email) {
+      toast.error("First name, last name and email are required.");
+      return;
+    }
+
+    const res = await fetch("/api/users", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name, email, department }),
+      body: JSON.stringify({
+        firstName,
+        lastName,
+        email,
+        password,
+      }),
     });
+
+    const data = await res.json();
+
     if (res.ok) {
-      const newFaculty = await res.json();
-      setFaculties((prev) => [...prev, newFaculty]);
-      setName("");
+      toast.success("Faculty account created successfully.");
+      setFirstName("");
+      setLastName("");
       setEmail("");
-      setDepartment("");
+      setPassword("");
+      loadFaculties();
+    } else {
+      toast.error(data?.error || "Failed to create faculty account.");
     }
   };
 
   const handleDelete = async (id: string) => {
-    const res = await fetch(`/api/faculty/${id}`, { method: "DELETE" });
+    const res = await fetch(`/api/users/${id}`, { method: "DELETE" });
     if (res.ok) {
       setFaculties((prev) => prev.filter((f) => f._id !== id));
+      toast.success("Faculty account deleted.");
+    } else {
+      const data = await res.json().catch(() => ({}));
+      toast.error(data?.error || "Failed to delete faculty account.");
     }
   };
 
@@ -86,9 +98,15 @@ export default function AddFacultyPage() {
       {/* Form */}
       <div className="flex gap-3 mb-8 flex-wrap mt-10">
         <Input
-          placeholder="Full Name"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
+          placeholder="First Name"
+          value={firstName}
+          onChange={(e) => setFirstName(e.target.value)}
+          className="bg-background border-border text-foreground placeholder:text-muted-foreground"
+        />
+        <Input
+          placeholder="Last Name"
+          value={lastName}
+          onChange={(e) => setLastName(e.target.value)}
           className="bg-background border-border text-foreground placeholder:text-muted-foreground"
         />
         <Input
@@ -97,18 +115,12 @@ export default function AddFacultyPage() {
           onChange={(e) => setEmail(e.target.value)}
           className="bg-background border-border text-foreground placeholder:text-muted-foreground"
         />
-        <Select value={department} onValueChange={setDepartment}>
-          <SelectTrigger className="w-40 bg-background border-border text-foreground">
-            <SelectValue placeholder="Department" />
-          </SelectTrigger>
-          <SelectContent className="bg-popover border border-border text-popover-foreground">
-            {departments.map((d) => (
-              <SelectItem key={d._id} value={d.name}>
-                {d.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Input
+          placeholder="Password (optional)"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          className="bg-background border-border text-foreground placeholder:text-muted-foreground"
+        />
         <Button
           onClick={handleAdd}
           className="bg-primary hover:bg-primary/85 text-primary-foreground shadow-md"
@@ -124,7 +136,7 @@ export default function AddFacultyPage() {
             <tr>
               <th className="py-3 px-4 text-left">Name</th>
               <th className="py-3 px-4 text-left">Email</th>
-              <th className="py-3 px-4 text-left">Department</th>
+              <th className="py-3 px-4 text-left">Type</th>
               <th className="py-3 px-4 text-right">Actions</th>
             </tr>
           </thead>
@@ -137,10 +149,10 @@ export default function AddFacultyPage() {
                 }`}
               >
                 <td className="py-3 px-4 font-medium text-foreground">
-                  {f.name}
+                  {f.firstName} {f.lastName}
                 </td>
                 <td className="py-3 px-4 text-muted-foreground">{f.email}</td>
-                <td className="py-3 px-4 text-muted-foreground">{f.department}</td>
+                <td className="py-3 px-4 text-muted-foreground">Faculty User</td>
                 <td className="py-3 px-4 text-right">
                   <button
                     className="text-red-500 hover:text-red-400 transition"

@@ -661,7 +661,7 @@ useEffect(() => {
             </Link>
             <Link href="/faculty/bulk/manage" className="block">
               <Button variant="outline" className="w-full justify-start border-border bg-card hover:bg-accent/20">
-                <UserPlus className="mr-2 h-4 w-4" /> User Creation
+                <UserPlus className="mr-2 h-4 w-4" /> Student Management
               </Button>
             </Link>
             <Link href="/profile" className="block">
@@ -709,7 +709,7 @@ useEffect(() => {
             </Link>
             <Link href="/faculty/bulk/manage" className="w-full sm:w-auto">
               <Button variant="outline" className="w-full border-border bg-card hover:bg-accent/20 sm:w-auto">
-                <Upload className="mr-2 h-4 w-4" /> Manage Users
+                <Upload className="mr-2 h-4 w-4" /> Manage Students
               </Button>
             </Link>
           </div>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import * as XLSX from "xlsx";
 import { connectDB } from "@/lib/db";
 import User from "@/lib/models/User";
+import FacultyClassSection from "@/lib/models/FacultyClassSection";
 import { authorizeApiRoles } from "@/lib/apiAuth";
 
 const normalizeText = (value: unknown) => String(value ?? "").trim();
@@ -41,15 +42,62 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No valid emails found" }, { status: 400 });
     }
 
-    const deleteQuery: Record<string, unknown> = { email: { $in: userEmails } };
-    if (auth.user.role === "faculty") {
-      deleteQuery.role = "student";
+    if (auth.user.role === "admin") {
+      const result = await User.deleteMany({
+        email: { $in: userEmails },
+        role: "faculty",
+      });
+
+      return NextResponse.json({
+        message: `Deleted ${result.deletedCount} faculty users successfully.`,
+        summary: {
+          requested: userEmails.length,
+          deletedCount: result.deletedCount,
+          skipped: Math.max(0, userEmails.length - Number(result.deletedCount || 0)),
+        },
+      });
     }
 
-    const result = await User.deleteMany(deleteQuery);
+    const facultyAssignments = await FacultyClassSection.find({
+      facultyUserId: auth.user.id,
+      isActive: true,
+    })
+      .select("course section")
+      .lean();
+
+    const assignmentSet = new Set(
+      (facultyAssignments as Array<{ course: unknown; section: unknown }>).map(
+        (item) => `${String(item.course)}|${String(item.section)}`
+      )
+    );
+
+    if (assignmentSet.size === 0) {
+      return NextResponse.json(
+        {
+          message: "No assigned class-section found for this faculty.",
+          summary: { requested: userEmails.length, deletedCount: 0, skipped: userEmails.length },
+        },
+        { status: 200 }
+      );
+    }
+
+    const candidates = await User.find({
+      email: { $in: userEmails },
+      role: "student",
+    })
+      .select("_id course section")
+      .lean();
+
+    const deletableIds = (candidates as Array<{ _id: unknown; course?: unknown; section?: unknown }>)
+      .filter((u) => assignmentSet.has(`${String(u.course)}|${String(u.section)}`))
+      .map((u) => u._id);
+
+    const result = deletableIds.length
+      ? await User.deleteMany({ _id: { $in: deletableIds } })
+      : { deletedCount: 0 };
 
     return NextResponse.json({
-      message: `Deleted ${result.deletedCount} users successfully.`,
+      message: `Deleted ${result.deletedCount} student users successfully.`,
       summary: {
         requested: userEmails.length,
         deletedCount: result.deletedCount,

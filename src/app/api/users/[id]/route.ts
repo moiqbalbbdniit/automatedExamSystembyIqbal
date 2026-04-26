@@ -1,9 +1,38 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import UserModel from "@/lib/models/User";
 import { connectDB } from "@/lib/db";
 import bcrypt from "bcryptjs";
+import FacultyClassSection from "@/lib/models/FacultyClassSection";
+import { authorizeApiRoles } from "@/lib/apiAuth";
 
-export async function GET(req: Request, context: { params: Promise<{ id: string }>  }) {
+const canAccessUser = async (actor: { id: string; role: string }, target: any) => {
+  if (!target) return false;
+  if (actor.role === "admin") return target.role === "faculty";
+  if (actor.role === "faculty") {
+    if (target.role !== "student") return false;
+    const assignments = await FacultyClassSection.find({
+      facultyUserId: actor.id,
+      isActive: true,
+    })
+      .select("course section")
+      .lean();
+
+    const allowed = new Set(
+      (assignments as Array<{ course: unknown; section: unknown }>).map(
+        (item) => `${String(item.course)}|${String(item.section)}`
+      )
+    );
+
+    return allowed.has(`${String(target.course)}|${String(target.section)}`);
+  }
+
+  return actor.id === String(target._id);
+};
+
+export async function GET(req: NextRequest, context: { params: Promise<{ id: string }>  }) {
+
+  const auth = authorizeApiRoles(req, ["admin", "faculty", "student"]);
+  if (!auth.ok) return auth.response;
 
   const { id } =  await context.params; 
   
@@ -14,6 +43,14 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
   try {
     await connectDB();
     const user = await UserModel.findById(id).select("-password");
+
+    const selfAccess = auth.user.id === id;
+    if (!selfAccess) {
+      const allowed = await canAccessUser(auth.user, user);
+      if (!allowed) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -27,10 +64,13 @@ export async function GET(req: Request, context: { params: Promise<{ id: string 
 }
 
 
-export async function PATCH(req: Request , context: { params: Promise<{ id: string }> }) {
+export async function PATCH(req: NextRequest , context: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
-    // const id = url.pathname.split("/").pop();
+
+    const auth = authorizeApiRoles(req, ["admin", "faculty", "student"]);
+    if (!auth.ok) return auth.response;
+
     const {id} =  await context.params;
 
     if (!id) {
@@ -38,6 +78,19 @@ export async function PATCH(req: Request , context: { params: Promise<{ id: stri
     }
 
     console.log("PATCH request for user ID:", id);
+
+    const existingUser = await UserModel.findById(id).select("role course section").lean();
+    if (!existingUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const selfAccess = auth.user.id === id;
+    if (!selfAccess) {
+      const allowed = await canAccessUser(auth.user, existingUser);
+      if (!allowed) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+    }
 
     const data = await req.json();
     const { firstName, lastName, email, role, status, password, username,
@@ -51,7 +104,7 @@ export async function PATCH(req: Request , context: { params: Promise<{ id: stri
     if (firstName) updateData.firstName = firstName;
     if (lastName) updateData.lastName = lastName;
     if (email) updateData.email = email;
-    if (role) updateData.role = role;
+    if (role && auth.user.role === "admin") updateData.role = role;
     if (status) updateData.status = status;
     if (username) updateData.username = username;
         if (phone !== undefined) updateData.phone = phone;
@@ -82,8 +135,11 @@ export async function PATCH(req: Request , context: { params: Promise<{ id: stri
 
 
 // delete a users 
-export async function DELETE(req: Request) {
+export async function DELETE(req: NextRequest) {
   try {
+    const auth = authorizeApiRoles(req, ["admin", "faculty"]);
+    if (!auth.ok) return auth.response;
+
     await connectDB();
 
     // Extract id from URL manually
@@ -92,6 +148,16 @@ export async function DELETE(req: Request) {
 
     if (!id) {
       return NextResponse.json({ error: "Missing user ID" }, { status: 400 });
+    }
+
+    const targetUser = await UserModel.findById(id).select("_id role course section").lean();
+    if (!targetUser) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const allowed = await canAccessUser(auth.user, targetUser);
+    if (!allowed) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const deletedUser = await UserModel.findByIdAndDelete(id);

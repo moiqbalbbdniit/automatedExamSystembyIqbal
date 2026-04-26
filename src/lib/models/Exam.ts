@@ -6,6 +6,7 @@ const QuestionSchema = new Schema(
     Q_ID: String,
     question: String,
     options: [String],
+    marks: Number,
 
   },
   { _id: false }

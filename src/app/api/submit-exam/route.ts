@@ -43,15 +43,15 @@ export async function POST(req: Request) {
       );
     }
 
-    // Format answers and calculate total score & max score
+    // Format answers and calculate max score. Pending evaluation starts with score 0.
     let totalScore = 0;
     let maxScore = 0;
 
     const formattedAnswers = answers.map((a: any) => {
       const marks = a.marks || 0;
-      totalScore += marks; // We can update later if auto-grading is needed
       maxScore += marks;
       return {
+        questionId: a.questionId,
         questionText: a.questionText,
         studentAnswer: a.studentAnswer,
         marks,

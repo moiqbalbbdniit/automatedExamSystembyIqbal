@@ -124,6 +124,11 @@ export default function UsersTable() {
     });
   }, [users, debouncedSearchTerm, filterRole]);
 
+  const roleOptions = useMemo(() => {
+    const roles = Array.from(new Set(users.map((u) => String(u.role || "").toLowerCase()).filter(Boolean)));
+    return roles;
+  }, [users]);
+
   useEffect(() => {
     setPage(1);
   }, [debouncedSearchTerm, filterRole, pageSize]);
@@ -159,8 +164,9 @@ export default function UsersTable() {
           </SelectTrigger>
           <SelectContent className="bg-popover text-popover-foreground border-border">
             <SelectItem value="All">All Roles</SelectItem>
-            <SelectItem value="Faculty">Faculty</SelectItem>
-            <SelectItem value="Student">Student</SelectItem>
+            {roleOptions.includes("faculty") && <SelectItem value="Faculty">Faculty</SelectItem>}
+            {roleOptions.includes("student") && <SelectItem value="Student">Student</SelectItem>}
+            {roleOptions.includes("admin") && <SelectItem value="Admin">Admin</SelectItem>}
           </SelectContent>
         </Select>
 

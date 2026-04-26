@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/db";
 import User from "@/lib/models/User";
 import Course from "@/lib/models/Course";
 import Section from "@/lib/models/Section";
+import FacultyClassSection from "@/lib/models/FacultyClassSection";
 import bcrypt from "bcryptjs";
 import * as XLSX from "xlsx";
 import { authorizeApiRoles } from "@/lib/apiAuth";
@@ -66,6 +67,18 @@ export async function POST(req: NextRequest) {
       new Set(rows.map((row) => normalizeText(row.courseName).toLowerCase()).filter(Boolean))
     );
 
+    const facultyAssignments = auth.user.role === "faculty"
+      ? await FacultyClassSection.find({ facultyUserId: auth.user.id, isActive: true })
+          .select("course section")
+          .lean()
+      : [];
+
+    const facultyAssignmentSet = new Set(
+      (facultyAssignments as Array<{ course: unknown; section: unknown }>).map(
+        (item) => `${String(item.course)}|${String(item.section)}`
+      )
+    );
+
     const courseDocs = uniqueCourseNames.length
       ? await Course.find({
           name: {
@@ -92,7 +105,7 @@ export async function POST(req: NextRequest) {
     }
 
     const summary: BulkSummary = { created: 0, updated: 0, skipped: 0 };
-    const defaultHashedPassword = await bcrypt.hash("123456", 10);
+    const defaultHashedPassword = await bcrypt.hash("password123", 10);
     const operations: any[] = [];
 
     for (const row of rows) {
@@ -100,22 +113,11 @@ export async function POST(req: NextRequest) {
       const firstName = normalizeText(row.firstName);
       const lastName = normalizeText(row.lastName);
       const password = normalizeText(row.password);
-      const requestedRole = normalizeText(row.role).toLowerCase() || "student";
-      const role = auth.user.role === "faculty" ? "student" : requestedRole;
+      const role = auth.user.role === "faculty" ? "student" : "faculty";
       const courseName = normalizeText(row.courseName).toLowerCase();
       const sectionCode = normalizeText(row.sectionCode).toUpperCase();
 
       if (!email || !firstName || !lastName) {
-        summary.skipped += 1;
-        continue;
-      }
-
-      if (!["admin", "faculty", "student"].includes(role)) {
-        summary.skipped += 1;
-        continue;
-      }
-
-      if (auth.user.role === "faculty" && role !== "student") {
         summary.skipped += 1;
         continue;
       }
@@ -127,10 +129,17 @@ export async function POST(req: NextRequest) {
           ? sectionByCourseAndCode.get(`${String(courseDoc._id)}|${sectionCode}`)
           : null;
 
-      const requiresClassSection = role === "student" || role === "faculty";
-      if (requiresClassSection && (!courseDoc || !sectionDoc)) {
+      if (auth.user.role === "faculty" && (!courseDoc || !sectionDoc)) {
         summary.skipped += 1;
         continue;
+      }
+
+      if (auth.user.role === "faculty") {
+        const assignmentKey = `${String(courseDoc._id)}|${String(sectionDoc._id)}`;
+        if (!facultyAssignmentSet.has(assignmentKey)) {
+          summary.skipped += 1;
+          continue;
+        }
       }
 
       const userData: Record<string, unknown> = {
@@ -140,11 +149,11 @@ export async function POST(req: NextRequest) {
         role,
       };
 
-      if (courseDoc?._id) {
+      if (courseDoc?._id && auth.user.role === "faculty") {
         userData.course = courseDoc._id;
       }
 
-      if (sectionDoc?._id) {
+      if (sectionDoc?._id && auth.user.role === "faculty") {
         userData.section = sectionDoc._id;
       }
 

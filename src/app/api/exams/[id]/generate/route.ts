@@ -3,9 +3,9 @@ import { connectDB } from "@/lib/db";
 import Exam from "@/lib/models/Exam";
 import axios from "axios";
 
-const PYTHON_API_URL =
-  (process.env.NEXT_PUBLIC_EXAM_MODEL_URL || "http://127.0.0.1:8000") +
-  "/api/v1/generate-paper";
+const EXAM_MODEL_BASE_URL =
+  process.env.EXAM_MODEL_URL || process.env.NEXT_PUBLIC_EXAM_MODEL_URL || "http://127.0.0.1:8000";
+const PYTHON_API_URL = `${EXAM_MODEL_BASE_URL}/api/v1/generate-paper`;
 
 export async function POST(req: Request) {
   try {
@@ -25,14 +25,26 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Exam not found" }, { status: 404 });
     }
 
-    // payload (as per DS team's new model)
+    const durationMinutes = Number(exam.duration || 0);
+
+    // Send a richer blueprint payload for better generation quality.
     const payload = {
       subject: exam.subject?.name ? [exam.subject.name] : ["Unknown"],
       topic:
         exam.subject?.topics && exam.subject.topics.length > 0
           ? exam.subject.topics
           : [exam.title || "General"],
-      difficulty: [exam.short?.difficulty || "Medium"],
+      difficulty: [
+        exam.veryShort?.difficulty || "medium",
+        exam.short?.difficulty || "medium",
+        exam.long?.difficulty || "hard",
+      ],
+      difficulty_profile: {
+        mcq: exam.veryShort?.difficulty || "medium",
+        short_theory: exam.short?.difficulty || "medium",
+        long_theory: exam.long?.difficulty || "hard",
+        coding: exam.long?.difficulty || "hard",
+      },
       num_mcq: exam.veryShort?.count || 0,
       mcq_max_marks: 1,
       num_short_theory: exam.short?.count || 0,
@@ -41,7 +53,8 @@ export async function POST(req: Request) {
       long_theory_marks: 8,
       num_coding: exam.coding?.count || 0,
       coding_max_marks: 10,
-      duration: `${exam.duration || 0} minutes`,
+      duration: `${durationMinutes} minutes`,
+      duration_minutes: durationMinutes,
     };
 
     console.log("📤 Sending payload:", payload);
@@ -67,7 +80,7 @@ export async function POST(req: Request) {
 
     // save to DB
     exam.questions = normalizedQuestions;
-    exam.paper_solutions_map = generated.solutions || {};
+    exam.paper_solutions_map = generated.solutions || generated.paper_solutions_map || {};
     exam.status = "generated";
 
     const updatedExam = await exam.save();

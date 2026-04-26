@@ -21,10 +21,10 @@ import {
 import { toast } from "sonner";
 
 // --- Types ---
-type Question = { Q_ID: string; question: string; options?: string[]; type?: string };
+type Question = { Q_ID: string; question: string; options?: string[]; type?: string; marks?: number };
 type QuestionPaper = { MCQs?: Question[]; Theory?: Question[]; Coding?: Question[] };
 type Exam = { _id: string; title: string; subject: { name: string; code?: string }; duration: number; questions: QuestionPaper , proctoringEnabled?: boolean; };
-type Answer = { questionText: string; studentAnswer: string; marks: number };
+type Answer = { questionId?: string; questionText: string; studentAnswer: string; marks: number };
 
 export default function ExamTaker() {
   const params = useParams();
@@ -262,15 +262,18 @@ export default function ExamTaker() {
 
   // --- Answer Change ---
   const handleAnswerChange = (question: Question, studentAnswer: string) => {
-    const marks = question.type === "MCQ" ? 2 : question.type === "Theory" ? 10 : 10;
+    const fallbackMarks = question.type === "MCQ" ? 1 : question.type === "Theory" ? 5 : 10;
+    const marks = Number((question as any).marks ?? fallbackMarks);
     setAnswers((prev) => {
-      const existing = prev.find((a) => a.questionText === question.question);
+      const existing = prev.find((a) => a.questionId === question.Q_ID || a.questionText === question.question);
       if (existing) {
         return prev.map((a) =>
-          a.questionText === question.question ? { questionText: question.question, studentAnswer, marks } : a
+          (a.questionId === question.Q_ID || a.questionText === question.question)
+            ? { questionId: question.Q_ID, questionText: question.question, studentAnswer, marks }
+            : a
         );
       }
-      return [...prev, { questionText: question.question, studentAnswer, marks }];
+      return [...prev, { questionId: question.Q_ID, questionText: question.question, studentAnswer, marks }];
     });
   };
 

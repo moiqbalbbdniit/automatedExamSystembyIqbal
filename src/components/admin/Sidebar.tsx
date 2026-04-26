@@ -18,7 +18,7 @@ import {
 const navLinks = [
   { href: "/admin", label: "Dashboard", icon: Grid },
   { href: "/admin/question-bank", label: "Question Bank", icon: Book },
-  { href: "/admin/addFaculty", label: "Add Faculty", icon: Users },
+  { href: "/admin/addFaculty", label: "Manage Faculty", icon: Users },
   { href: "/admin/addSubject", label: "Add Subject", icon: BookOpenCheck },
   { href: "/admin/addDepartment", label: "Add Department", icon: Building2 },
   { href: "/admin/addCourses", label: "Add Course", icon: GraduationCap },

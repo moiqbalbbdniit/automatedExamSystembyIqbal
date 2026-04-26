@@ -6,6 +6,7 @@ export interface ISubmission extends Document {
   facultyId?: mongoose.Types.ObjectId;
   subjectId: mongoose.Types.ObjectId;
   answers: {
+    questionId?: string;
     questionText: string;
     studentAnswer: string;
     marks: number;
@@ -18,6 +19,7 @@ export interface ISubmission extends Document {
 
 const AnswerSchema = new Schema(
   {
+    questionId: { type: String, required: false },
     questionText: { type: String, required: true },
     studentAnswer: { type: String, required: true },
     marks: { type: Number, required: true, default: 0 },
