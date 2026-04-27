@@ -9,6 +9,16 @@ const EXAM_MODEL_BASE_URL =
   process.env.EXAM_MODEL_URL || process.env.NEXT_PUBLIC_EXAM_MODEL_URL || "http://127.0.0.1:8000";
 const PYTHON_API_URL = `${EXAM_MODEL_BASE_URL}/api/v1/evaluate-submission`;
 
+function assertModelUrlConfig() {
+  if (
+    process.env.NODE_ENV === "production" &&
+    !process.env.EXAM_MODEL_URL &&
+    !process.env.NEXT_PUBLIC_EXAM_MODEL_URL
+  ) {
+    throw new Error("EXAM_MODEL_URL is required in production");
+  }
+}
+
 type IncomingAnswer = {
   questionId?: string;
   questionText: string;
@@ -28,6 +38,8 @@ const normalize = (value: unknown) => String(value ?? "").trim().toLowerCase();
 
 export async function POST(req: Request) {
   try {
+    assertModelUrlConfig();
+
     await connectDB();
 
     const payload = (await req.json()) as IncomingSubmission[];

@@ -7,8 +7,20 @@ const EXAM_MODEL_BASE_URL =
   process.env.EXAM_MODEL_URL || process.env.NEXT_PUBLIC_EXAM_MODEL_URL || "http://127.0.0.1:8000";
 const PYTHON_API_URL = `${EXAM_MODEL_BASE_URL}/api/v1/generate-paper`;
 
+function assertModelUrlConfig() {
+  if (
+    process.env.NODE_ENV === "production" &&
+    !process.env.EXAM_MODEL_URL &&
+    !process.env.NEXT_PUBLIC_EXAM_MODEL_URL
+  ) {
+    throw new Error("EXAM_MODEL_URL is required in production");
+  }
+}
+
 export async function POST(req: Request) {
   try {
+    assertModelUrlConfig();
+
     // extract exam id (second-to-last segment)
     const url = new URL(req.url);
     const segments = url.pathname.split("/").filter(Boolean);
